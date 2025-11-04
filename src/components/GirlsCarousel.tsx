@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -22,7 +22,6 @@ const GirlsCarousel: React.FC<GirlsCarouselProps> = ({ models }) => {
   const [currentIndex, setCurrentIndex] = useState(2);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   const getVisibleCards = () => {
     const cards = [];

@@ -241,7 +241,7 @@ const isTomorrowAvailable = () => {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {currentBatchModels.map((model, index) => (
+          {currentBatchModels.map((model) => (
             <Link
               key={model.id}
               to={`/models/${model.name.toLowerCase()}`}
