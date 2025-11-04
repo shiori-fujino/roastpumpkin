@@ -1,0 +1,199 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+@keyframes glowPulse {
+  0%   { text-shadow: 0 0 4px rgba(0,255,0,0.6); opacity: 0.9; }
+  50%  { text-shadow: 0 0 12px rgba(0,255,0,1); opacity: 1; }
+  100% { text-shadow: 0 0 4px rgba(0,255,0,0.6); opacity: 0.9; }
+}
+
+.animate-glow {
+  animation: glowPulse 1.8s ease-in-out infinite;
+}
+
+  body {
+    @apply bg-black text-white antialiased;
+    font-family: 'Rajdhani', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Orbitron', monospace;
+    letter-spacing: 0.05em;
+  }
+}
+
+@layer utilities {
+  /* Custom scrollbar for webkit */
+  .scrollbar-thin::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .scrollbar-thumb-pink-500::-webkit-scrollbar-thumb {
+    background: linear-gradient(to right, #ec4899, #a855f7);
+    border-radius: 3px;
+  }
+
+  .scrollbar-track-gray-900::-webkit-scrollbar-track {
+    background: #111827;
+  }
+
+  /* Perspective for 3D effects */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  /* Neon glow text */
+  .neon-text-pink {
+    text-shadow: 
+      0 0 5px #ff00ff,
+      0 0 10px #ff00ff,
+      0 0 20px #ff00ff,
+      0 0 40px #ff00ff;
+  }
+
+  .neon-text-cyan {
+    text-shadow: 
+      0 0 5px #00ffff,
+      0 0 10px #00ffff,
+      0 0 20px #00ffff,
+      0 0 40px #00ffff;
+  }
+
+  /* Neon border glow */
+  .neon-border-pink {
+    box-shadow: 
+      0 0 5px #ff00ff,
+      0 0 10px #ff00ff,
+      inset 0 0 10px rgba(255, 0, 255, 0.2);
+  }
+
+  .neon-border-cyan {
+    box-shadow: 
+      0 0 5px #00ffff,
+      0 0 10px #00ffff,
+      inset 0 0 10px rgba(0, 255, 255, 0.2);
+  }
+}
+
+/* Custom animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 5px #ff00ff,
+      0 0 10px #ff00ff,
+      0 0 20px #ff00ff;
+  }
+  50% {
+    box-shadow: 
+      0 0 10px #ff00ff,
+      0 0 20px #ff00ff,
+      0 0 40px #ff00ff,
+      0 0 60px #00ffff;
+  }
+}
+
+@keyframes glow-trail {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 0, 255, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 20px rgba(255, 0, 255, 0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    text-shadow:
+      0 0 5px #ff00ff,
+      0 0 10px #ff00ff,
+      0 0 20px #ff00ff,
+      0 0 40px #ff00ff;
+  }
+  20%, 24%, 55% {
+    text-shadow: none;
+  }
+}
+
+/* Apply animations */
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-glow-trail {
+  animation: glow-trail 1s ease-out;
+}
+
+.animate-neon-flicker {
+  animation: neon-flicker 1.5s infinite;
+}
+
+/* Selection color */
+::selection {
+  background-color: rgba(255, 0, 255, 0.3);
+  color: #ffffff;
+}
+
+/* Hide scrollbar for snap scroll container */
+.snap-y::-webkit-scrollbar {
+  display: none;
+}
+
+.snap-y {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Disable transitions on images for performance */
+img {
+  transition: none;
+}
+
+/* Touch action for better mobile swipe */
+.touch-pan-x {
+  touch-action: pan-x;
+}
+
+.touch-pan-y {
+  touch-action: pan-y;
+}
