@@ -308,7 +308,7 @@ const ModelProfilePage: React.FC = () => {
 
                                 {/* Availability line */}
                                 {model.isAvailableNow ? (
-                                    <div className="text-5xl mt-4 font-bold text-red-400">
+                                    <div className="text-5xl mt-4 font-bold text-red-500">
                                         <span className="animate-glow">AVAILABLE NOW</span>
                                     </div>
                                 ) : model.nextAvailable ? (
@@ -417,7 +417,7 @@ const ModelProfilePage: React.FC = () => {
                                         <div
                                             key={service.name}
                                             className={`flex items-center gap-2 p-3 border transition-all ${service.available
-                                                ? 'bg-green-900/20 border-red-500/50 text-red-400'
+                                                ? 'bg-red-900/20 border-red-500/50 text-white-500'
                                                 : 'bg-gray-800/50 border-gray-700 text-gray-600'
                                                 }`}
                                         >

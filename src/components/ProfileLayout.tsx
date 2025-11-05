@@ -41,7 +41,7 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
               <ul className="space-y-2">
                 <li>
                   <Link 
-                    to="/#/rates"
+                    to="/rates"
                     className="text-gray-400 hover:text-red-500 transition-colors"
                   >
                     Rates & Services
@@ -49,23 +49,23 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
                 </li>
                 <li>
                   <Link
-                    to="/#/contact"
+                    to="/contact"
                     className="text-gray-400 hover:text-red-500 transition-colors"
                   >
                     Contact Us
                   </Link>
                 </li>
                 <li>
-                  <Link 
-                    to="/#roster"
+                  <a 
+                    href="/#roster"
                     className="text-gray-400 hover:text-red-500 transition-colors"
                   >
                     Roster
-                  </Link>
+                  </a>
                 </li>
                 <li>
                   <Link 
-                    to="/#/news"
+                    to="/news"
                     className="text-gray-400 hover:text-red-500 transition-colors"
                   >
                     News
