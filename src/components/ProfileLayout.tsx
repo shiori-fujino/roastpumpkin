@@ -1,5 +1,6 @@
 import React from 'react';
 import { Phone, MapPin, Clock, Link2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface ProfileLayoutProps {
   children: React.ReactNode;
@@ -39,36 +40,36 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
               </h3>
               <ul className="space-y-2">
                 <li>
-                  <a 
-                    href="/#/rates"
+                  <Link 
+                    to="/#/rates"
                     className="text-gray-400 hover:text-red-500 transition-colors"
                   >
                     Rates & Services
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a 
-                    href="/#/contact"
+                  <Link
+                    to="/#/contact"
                     className="text-gray-400 hover:text-red-500 transition-colors"
                   >
                     Contact Us
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a 
-                    href="/#roster"
+                  <Link 
+                    to="/#roster"
                     className="text-gray-400 hover:text-red-500 transition-colors"
                   >
                     Roster
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a 
-                    href="/#/news"
+                  <Link 
+                    to="/#/news"
                     className="text-gray-400 hover:text-red-500 transition-colors"
                   >
                     News
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
