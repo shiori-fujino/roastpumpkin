@@ -57,7 +57,7 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
                 </li>
                 <li>
                   <a 
-                    href="/#roster"
+                    href="#roster"
                     className="text-gray-400 hover:text-red-500 transition-colors"
                   >
                     Roster
