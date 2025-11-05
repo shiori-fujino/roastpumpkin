@@ -257,26 +257,27 @@ const isTomorrowAvailable = () => {
                 alt={model.name}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
+              
+              {/* Info overlay - now hidden on hover/tap */}
+<div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent group-hover:opacity-0 transition-opacity duration-300" />
 
-              {/* Neon glow on hover */}
-              <div className="absolute inset-0 bg-gradient-to-b from-pink-500/0 via-purple-500/0 to-cyan-500/0 group-hover:from-pink-500/20 group-hover:via-purple-500/20 group-hover:to-cyan-500/20 transition-all duration-500" />
-
-              {/* Info overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent flex flex-col justify-end p-4">
-                {/* Availability badge */}
-                {model.isAvailableNow ? (
-                  <div className="absolute top-3 left-3 px-3 py-1 bg-green-500 text-black text-xs font-bold animate-pulse"
-                    style={{
-                      boxShadow: '0 0 15px rgba(0,255,0,0.8)'
-                    }}
-                  >
-                    AVAILABLE NOW
-                  </div>
-                ) : model.nextAvailable ? (
-                  <div className="absolute top-3 left-3 px-3 py-1 bg-gray-900 border border-red-500/50 text-red-400 text-sm font-bold">
-                    Available at {model.nextAvailable}
-                  </div>
-                ) : null}
+{/* Info elements - always visible */}
+<div className="absolute inset-0 flex flex-col justify-end p-4 pointer-events-none">
+  {/* Availability badge */}
+  {model.isAvailableNow ? (
+    <div className="absolute top-3 left-3 px-3 py-1 bg-green-500 text-black text-xs font-bold animate-pulse pointer-events-auto"
+      style={{
+        boxShadow: '0 0 15px rgba(0,255,0,0.8)'
+      }}
+    >
+      AVAILABLE NOW
+    </div>
+  ) : model.nextAvailable ? (
+    <div className="absolute top-3 left-3 px-3 py-1 bg-gray-900 border border-red-500/50 text-red-400 text-sm font-bold pointer-events-auto">
+      Available at {model.nextAvailable}
+    </div>
+  ) : null}
+              
 
                 {/* NEW badge */}
                 {model.isNew && (

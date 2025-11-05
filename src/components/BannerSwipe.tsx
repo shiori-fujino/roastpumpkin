@@ -79,17 +79,7 @@ const BannerSwipe: React.FC<BannerSwipeProps> = ({ banners }) => {
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-black">
-      {/* Background grid effect */}
-      <div className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,0,255,0.3) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,0,255,0.3) 1px, transparent 1px)
-          `,
-          backgroundSize: '50px 50px'
-        }}
-      />
-
+ 
       {/* Banner slides */}
       <div
         className="relative h-full w-full"
@@ -105,10 +95,6 @@ const BannerSwipe: React.FC<BannerSwipeProps> = ({ banners }) => {
                 : 'opacity-0 scale-95'
               }`}
           >
-            {/* Neon glow effect on active slide */}
-            {index === currentIndex && (
-              <div className="absolute inset-0 bg-gradient-to-b from-red-300/20 via-transparent to-red-900/20 animate-pulse" />
-            )}
 
             <img
               src={banner.image}
@@ -167,12 +153,6 @@ const BannerSwipe: React.FC<BannerSwipeProps> = ({ banners }) => {
         ))}
       </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 animate-bounce">
-        <div className="w-6 h-10 border-2 border-red-500 rounded-full flex justify-center pt-2">
-          <div className="w-1 h-2 bg-red-500 rounded-full animate-pulse" />
-        </div>
-      </div>
     </section>
   );
 };

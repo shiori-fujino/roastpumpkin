@@ -51,7 +51,7 @@ const ModelProfilePage: React.FC = () => {
             ...(data.rosterToday || []),
             ...(data.rosterTomorrow || []),
         ].filter((g: any) => g && typeof g === 'object' && 'name' in g);
-        
+
         const found = allGirls.find(
             (g: any) => g.name.toLowerCase() === name?.toLowerCase()
         ) as ModelProfile | undefined;
@@ -131,24 +131,27 @@ const ModelProfilePage: React.FC = () => {
                     {/* Back Button */}
                     <button
                         onClick={() => {
-                            window.location.href = '/#/';
+                            // Navigate to home page
+                            window.location.hash = '#/';
+
+                            // Wait for navigation and page render, then scroll
                             setTimeout(() => {
                                 const rosterSection = document.getElementById('roster');
                                 if (rosterSection) {
                                     rosterSection.scrollIntoView({ behavior: 'smooth' });
                                 }
-                            }, 100);
+                            }, 300); // Increased timeout to ensure page loads
                         }}
                         className="inline-flex items-center gap-2 mb-6 px-4 py-2 
-                                   bg-gradient-to-r from-red-600/20 to-red-800/20 
-                                   border border-red-500/50 
-                                   text-red-400 hover:text-red-300
-                                   hover:bg-red-600/30 hover:border-red-400
-                                   transition-all duration-300
-                                   uppercase tracking-wider font-bold text-sm
-                                   shadow-[0_0_15px_rgba(255,40,40,0.3)]
-                                   hover:shadow-[0_0_25px_rgba(255,40,40,0.5)]
-                                   cursor-pointer"
+               bg-gradient-to-r from-red-600/20 to-red-800/20 
+               border border-red-500/50 
+               text-red-400 hover:text-red-300
+               hover:bg-red-600/30 hover:border-red-400
+               transition-all duration-300
+               uppercase tracking-wider font-bold text-sm
+               shadow-[0_0_15px_rgba(255,40,40,0.3)]
+               hover:shadow-[0_0_25px_rgba(255,40,40,0.5)]
+               cursor-pointer"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         Go Back to Roster
