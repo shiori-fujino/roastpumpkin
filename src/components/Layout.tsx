@@ -47,11 +47,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   </li>
                   <li>
                     <a
-                      href="#roster"
-                      className="text-gray-400 hover:text-red-500 transition-colors"
-                    >
-                      Roster
-                    </a>
+                        href="/#/"
+  onClick={(e) => {
+    e.preventDefault();
+    window.location.hash = '#/';
+    setTimeout(() => {
+      const rosterSection = document.getElementById('roster');
+      if (rosterSection) {
+        rosterSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 300);
+  }}
+  className="text-gray-400 hover:text-red-500 transition-colors"
+>
+  Roster
+</a>
                   </li>
                   <li>
                     <Link
