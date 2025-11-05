@@ -72,11 +72,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <MapPin className="w-5 h-5" />
                   LOCATION
                 </h3>
-                <p className="text-gray-400">
-                  Near Sydenham Station<br />
+                <a href="https://www.google.com/maps/dir//Sydenham+Station,+Marrickville+NSW+2204"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-red-500 transition-colors block"
+                >                  Near Sydenham Station<br />
                   Marrickville, NSW 2204<br />
                   Sydney, Australia
-                </p>
+                </a>
               </div>
 
               {/* Hours */}
@@ -101,7 +104,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   href="tel:+61417888123"
                   className="text-2xl font-bold text-white hover:text-red-500 transition-colors"
                   style={{
-                    textShadow: '0 0 10px rgba(0,255,255,0.8)'
+                    textShadow: '0 0 10px rgba(255,40,40,0.9)'
                   }}
                 >
                   0417 888 123
