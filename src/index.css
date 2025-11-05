@@ -13,10 +13,22 @@
     scroll-behavior: smooth;
   }
 @keyframes glowPulse {
-  0%   { text-shadow: 0 0 4px rgba(0,255,0,0.6); opacity: 0.9; }
-  50%  { text-shadow: 0 0 12px rgba(0,255,0,1); opacity: 1; }
-  100% { text-shadow: 0 0 4px rgba(0,255,0,0.6); opacity: 0.9; }
+  0% {
+    text-shadow: 0 0 4px rgba(255,40,40,0.6);
+    opacity: 0.9;
+  }
+  50% {
+    text-shadow: 
+      0 0 10px rgba(255,60,60,1),
+      0 0 20px rgba(255,110,60,0.6);
+    opacity: 1;
+  }
+  100% {
+    text-shadow: 0 0 4px rgba(255,40,40,0.6);
+    opacity: 0.9;
+  }
 }
+
 
 .animate-glow {
   animation: glowPulse 1.8s ease-in-out infinite;

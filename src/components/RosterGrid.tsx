@@ -35,15 +35,15 @@ const RosterGrid: React.FC<RosterGridProps> = ({ rosterToday, rosterTomorrow }) 
   const BATCH_SIZE = 6;
   const currentRosterIds = activeTab === 'today' ? rosterToday : rosterTomorrow;
   const currentRoster = currentRosterIds
-  .map(id => data.models.find(m => m.id === id))
-  .filter(Boolean) as RosterModel[];
+    .map(id => data.models.find(m => m.id === id))
+    .filter(Boolean) as RosterModel[];
 
-// Check if tomorrow's roster is available (after 7 PM)
-const isTomorrowAvailable = () => {
-  const now = new Date();
-  const hour = now.getHours();
-  return hour >= 19; // 7 PM
-};
+  // Check if tomorrow's roster is available (after 7 PM)
+  const isTomorrowAvailable = () => {
+    const now = new Date();
+    const hour = now.getHours();
+    return hour >= 19; // 7 PM
+  };
 
   // Get unique nationalities
   const nationalities = [...new Set(currentRoster.map(m => m.nationality))].sort();
@@ -75,7 +75,7 @@ const isTomorrowAvailable = () => {
 
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
-    
+
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > 50;
     const isRightSwipe = distance < -50;
@@ -121,56 +121,52 @@ const isTomorrowAvailable = () => {
         {/* Tabs */}
         <div className="flex gap-4 mb-8 justify-center">
           <button
-  onClick={() => { setActiveTab('today'); setCurrentBatch(0); }}
-  className={`px-6 py-3 font-bold text-2xl tracking-wider transition-all ${
-    activeTab === 'today'
-      ? 'bg-gradient-to-r from-red-700 to-red-900 text-white'
-      : 'bg-gray-900 text-gray-500 hover:text-white'
-  } border-2 ${
-    activeTab === 'today' ? 'border-red-500' : 'border-gray-700'
-  }`}
-  style={{
-    boxShadow: activeTab === 'today'
-      ? `
+            onClick={() => { setActiveTab('today'); setCurrentBatch(0); }}
+            className={`px-6 py-3 font-bold text-2xl tracking-wider transition-all ${activeTab === 'today'
+              ? 'bg-gradient-to-r from-red-700 to-red-900 text-white'
+              : 'bg-gray-900 text-gray-500 hover:text-white'
+              } border-2 ${activeTab === 'today' ? 'border-red-500' : 'border-gray-700'
+              }`}
+            style={{
+              boxShadow: activeTab === 'today'
+                ? `
         0 0 18px rgba(255,60,60,0.6),
         0 0 35px rgba(255,120,60,0.35),
         inset 0 0 10px rgba(90,0,0,0.4)
       `
-      : 'none'
-  }}
->
-  TODAY
-</button>
+                : 'none'
+            }}
+          >
+            TODAY
+          </button>
 
-<button
-  onClick={() => { 
-    if (isTomorrowAvailable()) {
-      setActiveTab('tomorrow'); 
-      setCurrentBatch(0);
-    }
-  }}
-  disabled={!isTomorrowAvailable()}
-  className={`px-6 py-3 font-bold tracking-wider transition-all ${
-    activeTab === 'tomorrow'
-      ? 'bg-gradient-to-r from-red-600 to-red-700 text-white'
-      : isTomorrowAvailable()
-        ? 'bg-gray-900 text-gray-500 hover:text-white'
-        : 'bg-gray-900 text-gray-700 cursor-not-allowed'
-  } border-2 ${
-    activeTab === 'tomorrow' ? 'border-red-500' : 'border-gray-700'
-  }`}
-  style={{
-    boxShadow: activeTab === 'tomorrow'
-      ? `
+          <button
+            onClick={() => {
+              if (isTomorrowAvailable()) {
+                setActiveTab('tomorrow');
+                setCurrentBatch(0);
+              }
+            }}
+            disabled={!isTomorrowAvailable()}
+            className={`px-6 py-3 font-bold tracking-wider transition-all ${activeTab === 'tomorrow'
+              ? 'bg-gradient-to-r from-red-600 to-red-700 text-white'
+              : isTomorrowAvailable()
+                ? 'bg-gray-900 text-gray-500 hover:text-white'
+                : 'bg-gray-900 text-gray-700 cursor-not-allowed'
+              } border-2 ${activeTab === 'tomorrow' ? 'border-red-500' : 'border-gray-700'
+              }`}
+            style={{
+              boxShadow: activeTab === 'tomorrow'
+                ? `
         0 0 16px rgba(255,50,50,0.6),
         0 0 30px rgba(255,110,50,0.3),
         inset 0 0 8px rgba(80,0,0,0.35)
       `
-      : 'none'
-  }}
->
-  TOMORROW {!isTomorrowAvailable() && '(7PM)'}
-</button>
+                : 'none'
+            }}
+          >
+            TOMORROW {!isTomorrowAvailable() && '(OPEN 7PM)'}
+          </button>
 
         </div>
 
@@ -221,11 +217,10 @@ const isTomorrowAvailable = () => {
                 <button
                   key={nat}
                   onClick={() => toggleNationality(nat)}
-                  className={`px-3 py-1 text-md transition-all ${
-                    selectedNationalities.includes(nat)
-                      ? 'bg-gradient-to-r from-red-500 to-red-800 text-white border-red-500'
-                      : 'bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-500'
-                  } border`}
+                  className={`px-3 py-1 text-md transition-all ${selectedNationalities.includes(nat)
+                    ? 'bg-gradient-to-r from-red-500 to-red-800 text-white border-red-500'
+                    : 'bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-500'
+                    } border`}
                 >
                   {nat}
                 </button>
@@ -235,7 +230,7 @@ const isTomorrowAvailable = () => {
         )}
 
         {/* Grid */}
-        <div 
+        <div
           className="grid grid-cols-2 gap-0 mb-8"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -257,35 +252,44 @@ const isTomorrowAvailable = () => {
                 alt={model.name}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
-              
-              {/* Info overlay - now hidden on hover/tap */}
-<div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent group-hover:opacity-0 transition-opacity duration-300" />
 
-{/* Info elements - always visible */}
-<div className="absolute inset-0 flex flex-col justify-end p-4 pointer-events-none">
-  {/* Availability badge */}
-  {model.isAvailableNow ? (
-    <div className="absolute top-3 left-3 px-3 py-1 bg-green-500 text-black text-xs font-bold animate-pulse pointer-events-auto"
-      style={{
-        boxShadow: '0 0 15px rgba(0,255,0,0.8)'
-      }}
-    >
-      AVAILABLE NOW
-    </div>
-  ) : model.nextAvailable ? (
-    <div className="absolute top-3 left-3 px-3 py-1 bg-gray-900 border border-red-500/50 text-red-400 text-sm font-bold pointer-events-auto">
-      Available at {model.nextAvailable}
-    </div>
-  ) : null}
-              
+              {/* Info overlay - now hidden on hover/tap */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent group-hover:opacity-0 transition-opacity duration-300" />
+
+              {/* Info elements - always visible */}
+              <div className="absolute inset-0 flex flex-col justify-end p-4 pointer-events-none">
+                {/* Availability badge */}
+                {/* Availability badge */}
+                {model.isAvailableNow ? (
+                  <div
+                    className="absolute top-3 left-3 px-3 py-1
+                     bg-red-600 text-white text-sm font-bold animate-pulse pointer-events-auto"
+                    style={{
+                      boxShadow: "0 0 15px rgba(255,60,60,0.85)"
+                    }}
+                  >
+                    AVAILABLE NOW
+                  </div>
+                ) : model.nextAvailable ? (
+                  <div className="
+                  absolute top-3 left-3 px-3 py-1 
+                  bg-gray-900 border border-red-700/50 text-red-700 
+                  text-sm font-bold pointer-events-auto">
+                    Available at {model.nextAvailable}
+                  </div>
+                ) : null}
+
 
                 {/* NEW badge */}
                 {model.isNew && (
-                  <div className="absolute top-3 right-3 px-3 py-1 bg-red-500 text-white text-xs font-bold"
+                  <div
+                    className="absolute top-3 right-3 px-3 py-1 bg-red-700 text-white 
+                    text-sm font-bold"
                     style={{
-                      boxShadow: '0 0 15px rgba(255,0,255,0.8)'
+                      boxShadow: "0 0 15px rgba(255,50,50,0.8)"
                     }}
                   >
+
                     NEW
                   </div>
                 )}
@@ -304,20 +308,19 @@ const isTomorrowAvailable = () => {
           ))}
         </div>
 
-        
+
         {/* Progress dots */}
         <div className="flex justify-center gap-2">
           {Array.from({ length: totalBatches }).map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentBatch(index)}
-              className={`transition-all rounded-full ${
-                index === currentBatch
-                  ? 'w-8 h-2 bg-gradient-to-r from-red-500 to-red-900'
-                  : 'w-2 h-2 bg-gray-700 hover:bg-gray-500'
-              }`}
+              className={`transition-all rounded-full ${index === currentBatch
+                ? 'w-8 h-2 bg-gradient-to-r from-red-500 to-red-900'
+                : 'w-2 h-2 bg-gray-700 hover:bg-gray-500'
+                }`}
               style={{
-                boxShadow: index === currentBatch 
+                boxShadow: index === currentBatch
                   ? '0 0 10px rgba(255,0,255,0.8), 0 0 20px rgba(0,255,255,0.6)'
                   : 'none'
               }}

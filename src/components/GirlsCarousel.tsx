@@ -160,15 +160,16 @@ const GirlsCarousel: React.FC<GirlsCarouselProps> = ({ models }) => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
 
                   {/* NEW badge */}
-                  {card.isNew && (
-                    <div className="absolute top-3 right-3 px-2 py-1 bg-red-500 text-white text-xs font-bold animate-pulse"
-                      style={{
-                        boxShadow: '0 0 15px rgba(255,0,255,0.8)'
-                      }}
-                    >
-                      NEW
-                    </div>
-                  )}
+{card.isNew && (
+  <div
+    className="absolute top-3 right-3 px-2 py-1 bg-red-500 text-white text-xs font-bold animate-pulse"
+    style={{
+      boxShadow: "0 0 15px rgba(255,50,50,0.85)"
+    }}
+  >
+    NEW
+  </div>
+)}
 
                   {/* Info at bottom */}
                   <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -190,12 +191,12 @@ const GirlsCarousel: React.FC<GirlsCarouselProps> = ({ models }) => {
                           </span>
                         )}
                         {card.dfk && (
-                          <span className="px-2 py-0.5 bg-amber-500/80 text-white text-xs">
+                          <span className="px-2 py-0.5 bg-red-600/80 text-white text-xs">
                             DFK
                           </span>
                         )}
                         {card.filming && (
-                          <span className="px-2 py-0.5 bg-red-500/80 text-white text-xs">
+                          <span className="px-2 py-0.5 bg-red-700/80 text-white text-xs">
                             Filming
                           </span>
                         )}

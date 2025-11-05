@@ -2,28 +2,28 @@
   "banners": [
     {
       "id": 1,
-      "image": "https://i.pinimg.com/1200x/15/d9/62/15d96225f14c29420eb37066a183d6bd.jpg",
-      "title": "Tokyo Nights"
+      "image": "https://i.pinimg.com/736x/da/05/7a/da057a7b80761176bd73aaab1da9064f.jpg",
+      "title": ""
     },
     {
       "id": 2,
-      "image": "https://i.pinimg.com/1200x/bf/be/ae/bfbeae3581b3f03bf00d788315a3504a.jpg",
-      "title": "Neon Dreams"
+      "image": "https://i.pinimg.com/1200x/aa/b5/5b/aab55bed5a22525662bcc8f2382fb4a9.jpg",
+      "title": ""
     },
     {
       "id": 3,
-      "image": "https://i.pinimg.com/1200x/23/43/89/234389f4187b5953148681c25d4a1821.jpg",
-      "title": "Electric Paradise"
+      "image": "https://i.pinimg.com/1200x/99/ec/d7/99ecd76cf73aed399f3c91d2767098dd.jpg",
+      "title": ""
     },
     {
       "id": 4,
-      "image": "https://i.pinimg.com/736x/ac/eb/86/aceb86a9022ee6993ba62606a6a95eb2.jpg",
-      "title": "Cyber City"
+      "image": "https://i.pinimg.com/736x/3b/f4/60/3bf460f626d8ac79bcec5adf45aa09ab.jpg",
+      "title": ""
     },
     {
       "id": 5,
-      "image": "https://i.pinimg.com/1200x/f6/5c/df/f65cdfb9d164df4bc5f70f65291a3c4b.jpg",
-      "title": "Blade Runner"
+      "image": "https://i.pinimg.com/736x/33/01/26/3301268c145f94936098c00789ae1b72.jpg",
+      "title": ""
     }
   ],
   "models": [
@@ -133,7 +133,7 @@
       "id": 4,
       "name": "Mia",
       "nationality": "Thai",
-      "image": "https://no5marrickville.com/media/uploads/Image_20251021132951_184_1714.jpg",
+      "image": "https://no5marrickville.com/media/uploads/IMG_3524.jpeg",
       "profileLink": "/models/mia",
       "isNew": true,
       "filming": true,

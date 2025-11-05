@@ -308,7 +308,7 @@ const ModelProfilePage: React.FC = () => {
 
                                 {/* Availability line */}
                                 {model.isAvailableNow ? (
-                                    <div className="text-5xl mt-4 font-bold text-green-400">
+                                    <div className="text-5xl mt-4 font-bold text-red-400">
                                         <span className="animate-glow">AVAILABLE NOW</span>
                                     </div>
                                 ) : model.nextAvailable ? (
@@ -332,7 +332,7 @@ const ModelProfilePage: React.FC = () => {
 
                             {/* Details */}
                             <div className="bg-gray-900 border border-red-500/30 p-6">
-                                <h3 className="text-red-400 font-bold text-lg mb-4 uppercase tracking-widest">
+                                <h3 className="text-red-700 font-bold text-lg mb-4 uppercase tracking-widest">
                                     Details
                                 </h3>
                                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -402,14 +402,14 @@ const ModelProfilePage: React.FC = () => {
                             {/* Requirements */}
                             {model.requirements && (
                                 <div className="bg-red-900/20 border-l-4 border-red-500 pl-4 py-3">
-                                    <p className="text-red-400 font-bold uppercase text-lg mb-1">Requirements</p>
+                                    <p className="text-red-700 font-bold uppercase text-lg mb-1">Requirements</p>
                                     <p className="text-white text-2xl">{model.requirements}</p>
                                 </div>
                             )}
 
                             {/* Available Services */}
                             <div className="bg-gray-900 border border-red-500/30 p-6">
-                                <h3 className="text-red-400 font-bold text-lg mb-4 uppercase tracking-widest">
+                                <h3 className="text-red-700 font-bold text-lg mb-4 uppercase tracking-widest">
                                     Available Services
                                 </h3>
                                 <div className="grid grid-cols-2 gap-3">
@@ -417,7 +417,7 @@ const ModelProfilePage: React.FC = () => {
                                         <div
                                             key={service.name}
                                             className={`flex items-center gap-2 p-3 border transition-all ${service.available
-                                                ? 'bg-green-900/20 border-green-500/50 text-green-400'
+                                                ? 'bg-green-900/20 border-red-500/50 text-red-400'
                                                 : 'bg-gray-800/50 border-gray-700 text-gray-600'
                                                 }`}
                                         >

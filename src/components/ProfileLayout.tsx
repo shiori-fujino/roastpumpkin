@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone, MapPin, Clock } from 'lucide-react';
+import { Phone, MapPin, Clock, Link2 } from 'lucide-react';
 
 interface ProfileLayoutProps {
   children: React.ReactNode;
@@ -13,7 +13,11 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
         {children}
         
         {/* Footer - normal flow */}
-        <footer className="relative bg-black border-t border-pink-500/30 py-12">
+        <footer className="relative bg-black border-t border-red-500/50 py-12 min-h-screen flex items-center"
+  style={{
+    boxShadow: "0 -10px 12px rgba(255,60,60,0.15)" // layered glow
+  }}
+>
         {/* Background effect */}
         <div className="absolute inset-0 opacity-5"
           style={{
@@ -27,6 +31,47 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
 
         <div className="relative z-10 max-w-screen-xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* Quick Links */}
+            <div>
+              <h3 className="text-red-700 font-bold text-lg mb-4 flex items-center gap-2">
+                <Link2 className="w-5 h-5" />
+                QUICK LINKS
+              </h3>
+              <ul className="space-y-2">
+                <li>
+                  <a 
+                    href="/#rates"
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    Rates & Services
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="/#contact"
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    Contact Us
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="/#roster"
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    Roster
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="/#news"
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    News
+                  </a>
+                </li>
+              </ul>
+            </div>
             {/* Contact */}
             <div>
               <h3 className="text-red-700 font-bold text-lg mb-4 flex items-center gap-2">
