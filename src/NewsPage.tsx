@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import ProfileLayout from './components/ProfileLayout';
-import newsData from './data/news.json';
+import data from './data/data.json';
 
 interface NewsItem {
   date: string;
@@ -14,7 +14,7 @@ const NewsPage: React.FC = () => {
 
   useEffect(() => {
     // Sort by date descending (newest first)
-    const sorted = [...newsData].sort((a, b) => 
+    const sorted = [...data.news].sort((a, b) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
     setNews(sorted);

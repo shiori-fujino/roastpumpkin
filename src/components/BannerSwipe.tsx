@@ -80,7 +80,7 @@ const BannerSwipe: React.FC<BannerSwipeProps> = ({ banners }) => {
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-black">
- 
+
       {/* Banner slides */}
       <div
         className="relative h-full w-full"
@@ -89,18 +89,24 @@ const BannerSwipe: React.FC<BannerSwipeProps> = ({ banners }) => {
         onTouchEnd={handleTouchEnd}
       >
         {banners.map((banner, index) => (
-          <div
-            key={banner.id}
-            className={`absolute inset-0 transition-all duration-500 ${index === currentIndex
-                ? 'opacity-100 scale-100'
-                : 'opacity-0 scale-95'
-              }`}
-              onClick={() => {
-    if (banner.newsId !== undefined) {
-      window.location.hash = `#/news/${banner.newsId}`;
-    }
-  }}
-          >
+  <div
+    key={banner.id}
+    className={`absolute inset-0 transition-all duration-500 ${
+      index === currentIndex
+        ? 'opacity-100 scale-100 z-10'  // Add z-10 for active
+        : 'opacity-0 scale-95 pointer-events-none'  // Add pointer-events-none for inactive
+    }`}
+    onClick={() => {
+      // Only clickable when it's the current banner
+      if (index === currentIndex && banner.newsId !== undefined) {
+        console.log('Clicked banner newsId:', banner.newsId);
+        window.location.hash = `#/news/${banner.newsId}`;
+      }
+    }}
+    style={{ 
+      cursor: index === currentIndex && banner.newsId !== undefined ? 'pointer' : 'default' 
+    }}
+  >
 
             <img
               src={banner.image}
@@ -147,8 +153,8 @@ const BannerSwipe: React.FC<BannerSwipeProps> = ({ banners }) => {
               resetAutoPlay();
             }}
             className={`transition-all ${index === currentIndex
-                ? 'w-8 h-2 bg-gradient-to-r from-red-500 to-red-900'
-                : 'w-2 h-2 bg-white/30 hover:bg-white/50'
+              ? 'w-8 h-2 bg-gradient-to-r from-red-500 to-red-900'
+              : 'w-2 h-2 bg-white/30 hover:bg-white/50'
               } rounded-full`}
             style={{
               boxShadow: index === currentIndex

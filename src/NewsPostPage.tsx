@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import ProfileLayout from './components/ProfileLayout';
-import newsData from './data/news.json';
+import data from './data/data.json';
 
 interface NewsItem {
   date: string;
@@ -17,7 +17,7 @@ const NewsPostPage: React.FC = () => {
   useEffect(() => {
     if (id) {
       const index = parseInt(id);
-      const sorted = [...newsData].sort((a, b) => 
+      const sorted = [...data.news].sort((a, b) => 
         new Date(b.date).getTime() - new Date(a.date).getTime()
       );
       setNewsItem(sorted[index] || null);
