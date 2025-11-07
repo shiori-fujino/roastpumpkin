@@ -85,7 +85,7 @@ const NewsPage: React.FC = () => {
             {news.map((item, index) => (
               <Link
                 key={index}
-                to={`/#/news/${index}`}
+                to={`/news/${index}`}
                 className="group block"
               >
                 <div className="flex items-baseline py-6 border-b border-red-900/20 hover:border-red-500/30 transition-all">
