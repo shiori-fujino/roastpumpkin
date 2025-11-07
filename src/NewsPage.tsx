@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import ProfileLayout from './components/ProfileLayout';
 import data from './data/data.json';
+import { Link } from 'react-router-dom';
+
 
 interface NewsItem {
   date: string;
@@ -81,9 +83,9 @@ const NewsPage: React.FC = () => {
           {/* News List */}
           <div className="space-y-6">
             {news.map((item, index) => (
-              <a 
+              <Link
                 key={index}
-                href={`/#/news/${index}`}
+                to={`/#/news/${index}`}
                 className="group block"
               >
                 <div className="flex items-baseline py-6 border-b border-red-900/20 hover:border-red-500/30 transition-all">
@@ -102,7 +104,7 @@ const NewsPage: React.FC = () => {
                     →
                   </span>
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
 
