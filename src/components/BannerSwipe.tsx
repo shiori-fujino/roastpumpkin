@@ -4,6 +4,7 @@ interface Banner {
   id: number;
   image: string;
   title: string;
+  newsId?: number;
 }
 
 interface BannerSwipeProps {
@@ -94,6 +95,11 @@ const BannerSwipe: React.FC<BannerSwipeProps> = ({ banners }) => {
                 ? 'opacity-100 scale-100'
                 : 'opacity-0 scale-95'
               }`}
+              onClick={() => {
+    if (banner.newsId !== undefined) {
+      window.location.hash = `#/news/${banner.newsId}`;
+    }
+  }}
           >
 
             <img
