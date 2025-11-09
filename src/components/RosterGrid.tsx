@@ -229,83 +229,107 @@ const RosterGrid: React.FC<RosterGridProps> = ({ rosterToday, rosterTomorrow }) 
           </div>
         )}
 
-        {/* Grid */}
-        <div
-          className="grid grid-cols-2 gap-0 mb-8"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          {currentBatchModels.map((model) => (
-            <Link
-              key={model.id}
-              to={`/models/${model.name.toLowerCase()}`}
-              className="relative aspect-[3/4] overflow-hidden group block"
-              style={{
-                width: '50vw',
-                boxShadow: 'inset 0 0 0 1px rgba(255,0,255,0.2)'
-              }}
-            >
-              {/* Image */}
-              <img
-                src={model.image}
-                alt={model.name}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
+        {/* Grid with navigation */}
+        <div className="relative">
+          {/* Left chevron */}
+          <button
+            onClick={() => setCurrentBatch(prev => Math.max(0, prev - 1))}
+            disabled={currentBatch === 0}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black/80 hover:bg-red-500/20 text-red-500 p-3 backdrop-blur-sm transition-all disabled:opacity-30 border border-red-500/30"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
 
-              {/* Info overlay - now hidden on hover/tap */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent group-hover:opacity-0 transition-opacity duration-300" />
+          <div
+            className="grid grid-cols-2 gap-0 mb-8"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {currentBatchModels.map((model) => (
+              <Link
+                key={model.id}
+                to={`/models/${model.name.toLowerCase()}`}
+                className="relative aspect-[3/4] overflow-hidden group block"
+                style={{
+                  width: '50vw',
+                  boxShadow: 'inset 0 0 0 1px rgba(255,0,255,0.2)'
+                }}
+              >
+                {/* Image */}
+                <img
+                  src={model.image}
+                  alt={model.name}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
 
-              {/* Info elements - always visible */}
-              <div className="absolute inset-0 flex flex-col justify-end p-4 pointer-events-none">
-                {/* Availability badge */}
-                {/* Availability badge */}
-                {model.isAvailableNow ? (
-                  <div
-                    className="absolute top-3 left-3 px-3 py-1
+                {/* Info overlay - now hidden on hover/tap */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent group-hover:opacity-0 transition-opacity duration-300" />
+
+                {/* Info elements - always visible */}
+                <div className="absolute inset-0 flex flex-col justify-end p-4 pointer-events-none">
+                  {/* Availability badge */}
+                  {/* Availability badge */}
+                  {model.isAvailableNow ? (
+                    <div
+                      className="absolute top-3 left-3 px-3 py-1
                      bg-red-600 text-white text-sm font-bold animate-pulse pointer-events-auto"
-                    style={{
-                      boxShadow: "0 0 15px rgba(255,60,60,0.85)"
-                    }}
-                  >
-                    AVAILABLE NOW
-                  </div>
-                ) : model.nextAvailable ? (
-                  <div className="
+                      style={{
+                        boxShadow: "0 0 15px rgba(255,60,60,0.85)"
+                      }}
+                    >
+                      AVAILABLE NOW
+                    </div>
+                  ) : model.nextAvailable ? (
+                    <div className="
                   absolute top-3 left-3 px-3 py-1 
                   bg-gray-900 border border-red-700/50 text-red-700 
                   text-sm font-bold pointer-events-auto">
-                    Available at {model.nextAvailable}
-                  </div>
-                ) : null}
+                      Available at {model.nextAvailable}
+                    </div>
+                  ) : null}
 
 
-                {/* NEW badge */}
-                {model.isNew && (
-                  <div
-                    className="absolute top-3 right-3 px-3 py-1 bg-red-700 text-white 
+                  {/* NEW badge */}
+                  {model.isNew && (
+                    <div
+                      className="absolute top-3 right-3 px-3 py-1 bg-red-700 text-white 
                     text-sm font-bold"
+                      style={{
+                        boxShadow: "0 0 15px rgba(255,50,50,0.8)"
+                      }}
+                    >
+
+                      NEW
+                    </div>
+                  )}
+
+                  {/* Name and nationality */}
+                  <h3 className="text-white font-bold text-lg mb-1"
                     style={{
-                      boxShadow: "0 0 15px rgba(255,50,50,0.8)"
+                      textShadow: '0 0 10px rgba(255,0,255,0.8), 0 0 20px rgba(0,255,255,0.6)'
                     }}
                   >
+                    {model.name}
+                  </h3>
+                  <p className="text-red-800 text-lg">{model.nationality}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
 
-                    NEW
-                  </div>
-                )}
-
-                {/* Name and nationality */}
-                <h3 className="text-white font-bold text-lg mb-1"
-                  style={{
-                    textShadow: '0 0 10px rgba(255,0,255,0.8), 0 0 20px rgba(0,255,255,0.6)'
-                  }}
-                >
-                  {model.name}
-                </h3>
-                <p className="text-red-800 text-lg">{model.nationality}</p>
-              </div>
-            </Link>
-          ))}
+          {/* Right chevron */}
+          <button
+            onClick={() => setCurrentBatch(prev => Math.min(totalBatches - 1, prev + 1))}
+            disabled={currentBatch === totalBatches - 1}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black/80 hover:bg-red-500/20 text-red-500 p-3 backdrop-blur-sm transition-all disabled:opacity-30 border border-red-500/30"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
 
 
