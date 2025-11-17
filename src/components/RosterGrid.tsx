@@ -1,7 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Filter } from 'lucide-react';
 import data from "../data/data.json"
+
+// Add this hook at the top, before the component
+const useResponsiveBatchSize = () => {
+  const [batchSize, setBatchSize] = useState(() => {
+    return window.innerWidth >= 1024 ? 10 : 6;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      const newBatchSize = window.innerWidth >= 1024 ? 10 : 6;
+      setBatchSize(newBatchSize);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return batchSize;
+};
 
 interface RosterModel {
   id: number;
@@ -32,11 +51,17 @@ const RosterGrid: React.FC<RosterGridProps> = ({ rosterToday, rosterTomorrow }) 
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
 
-  const BATCH_SIZE = 6;
+  const BATCH_SIZE = useResponsiveBatchSize(); // Use the hook here
+
   const currentRosterIds = activeTab === 'today' ? rosterToday : rosterTomorrow;
   const currentRoster = currentRosterIds
     .map(id => data.models.find(m => m.id === id))
     .filter(Boolean) as RosterModel[];
+
+  // Reset to first batch when batch size changes (on resize)
+  useEffect(() => {
+    setCurrentBatch(0);
+  }, [BATCH_SIZE]);
 
   // Check if tomorrow's roster is available (after 7 PM)
   const isTomorrowAvailable = () => {
@@ -243,7 +268,7 @@ const RosterGrid: React.FC<RosterGridProps> = ({ rosterToday, rosterTomorrow }) 
           </button>
 
           <div
-            className="grid grid-cols-2 gap-0 mb-8"
+            className="grid grid-cols-2 lg:grid-cols-5 gap-0 mb-8"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -254,7 +279,7 @@ const RosterGrid: React.FC<RosterGridProps> = ({ rosterToday, rosterTomorrow }) 
                 to={`/models/${model.name.toLowerCase()}`}
                 className="relative aspect-[3/4] overflow-hidden group block"
                 style={{
-                  width: '50vw',
+                  // Removed width: '50vw'
                   boxShadow: 'inset 0 0 0 1px rgba(255,0,255,0.2)'
                 }}
               >
@@ -270,7 +295,6 @@ const RosterGrid: React.FC<RosterGridProps> = ({ rosterToday, rosterTomorrow }) 
 
                 {/* Info elements - always visible */}
                 <div className="absolute inset-0 flex flex-col justify-end p-4 pointer-events-none">
-                  {/* Availability badge */}
                   {/* Availability badge */}
                   {model.isAvailableNow ? (
                     <div
