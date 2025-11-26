@@ -86,9 +86,6 @@
       "isAvailableNow": true,
       "workingTime": "10:00 AM - 6:00 PM",
       "schedule": "Mon-Fri",
-      "filming": false,
-      "cim": true,
-      "dfk": true,
       "services": [
         { "name": "BBBJ", "available": true },
         { "name": "CIM", "available": true },
@@ -130,9 +127,6 @@
       "nextAvailable": "2:30 PM",
       "workingTime": "9:00 AM - 5:00 PM",
       "schedule": "Tue-Sat",
-      "filming": true,
-      "cim": false,
-      "dfk": true,
       "services": [
         { "name": "BBBJ", "available": true },
         { "name": "CIM", "available": false },
