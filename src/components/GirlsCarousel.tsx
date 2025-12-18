@@ -2,21 +2,23 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-interface Model {
+interface CarouselModel {
   id: number;
   name: string;
   nationality: string;
   image: string;
   profileLink: string;
   isNew: boolean;
-  filming: boolean;
-  cim: boolean;
-  dfk: boolean;
+  filming?: boolean;
+  cim?: boolean;
+  dfk?: boolean;
 }
 
+
 interface GirlsCarouselProps {
-  models: Model[];
+  models: CarouselModel[];
 }
+
 
 const GirlsCarousel: React.FC<GirlsCarouselProps> = ({ models }) => {
   const [scrollPosition, setScrollPosition] = useState(0);
