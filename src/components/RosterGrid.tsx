@@ -29,8 +29,6 @@ interface RosterModel {
   image: string;
   profileLink: string;
   isNew: boolean;
-  isAvailableNow?: boolean;
-  nextAvailable?: string;
   workingTime?: string;
   filming: boolean;
   cim: boolean;
@@ -47,7 +45,6 @@ const RosterGrid: React.FC<RosterGridProps> = ({ rosterToday, rosterTomorrow }) 
   const [currentBatch, setCurrentBatch] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedNationalities, setSelectedNationalities] = useState<string[]>([]);
-  const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
 
@@ -76,9 +73,6 @@ const RosterGrid: React.FC<RosterGridProps> = ({ rosterToday, rosterTomorrow }) 
   // Apply filters
   const filteredRoster = currentRoster.filter(model => {
     if (selectedNationalities.length > 0 && !selectedNationalities.includes(model.nationality)) {
-      return false;
-    }
-    if (onlyAvailable && !model.isAvailableNow) {
       return false;
     }
     return true;
@@ -125,7 +119,6 @@ const RosterGrid: React.FC<RosterGridProps> = ({ rosterToday, rosterTomorrow }) 
 
   const clearFilters = () => {
     setSelectedNationalities([]);
-    setOnlyAvailable(false);
     setCurrentBatch(0);
   };
 
@@ -203,11 +196,12 @@ const RosterGrid: React.FC<RosterGridProps> = ({ rosterToday, rosterTomorrow }) 
           >
             <Filter className="w-4 h-4" />
             FILTERS
-            {(selectedNationalities.length > 0 || onlyAvailable) && (
-              <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
-                {selectedNationalities.length + (onlyAvailable ? 1 : 0)}
-              </span>
-            )}
+            {selectedNationalities.length > 0 && (
+  <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
+    {selectedNationalities.length}
+  </span>
+)}
+
           </button>
 
           <div className="text-red-800 text-xl mr-6">
@@ -225,16 +219,7 @@ const RosterGrid: React.FC<RosterGridProps> = ({ rosterToday, rosterTomorrow }) 
               </button>
             </div>
 
-            {/* Only available toggle */}
-            <label className="flex items-center gap-2 mb-4 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={onlyAvailable}
-                onChange={(e) => { setOnlyAvailable(e.target.checked); setCurrentBatch(0); }}
-                className="w-4 h-4 accent-cyan-500"
-              />
-              <span className="text-red-400 text-lg">Show Available Girls Only</span>
-            </label>
+          
 
             {/* Nationality filters */}
             <div className="flex flex-wrap gap-2">
@@ -294,26 +279,7 @@ const RosterGrid: React.FC<RosterGridProps> = ({ rosterToday, rosterTomorrow }) 
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent group-hover:opacity-0 transition-opacity duration-300" />
 
                 {/* Info elements - always visible */}
-                <div className="absolute inset-0 flex flex-col justify-end p-4 pointer-events-none">
-                  {/* Availability badge */}
-                  {model.isAvailableNow ? (
-                    <div
-                      className="absolute top-3 left-3 px-3 py-1
-                     bg-red-600 text-white text-sm font-bold animate-pulse pointer-events-auto"
-                      style={{
-                        boxShadow: "0 0 15px rgba(255,60,60,0.85)"
-                      }}
-                    >
-                      AVAILABLE NOW
-                    </div>
-                  ) : model.nextAvailable ? (
-                    <div className="
-                  absolute top-3 left-3 px-3 py-1 
-                  bg-gray-900 border border-red-700/50 text-red-700 
-                  text-sm font-bold pointer-events-auto">
-                      Available at {model.nextAvailable}
-                    </div>
-                  ) : null}
+                <div className="absolute inset-0 flex flex-col justify-end p-4 pointer-events-none">                  
 
 
                   {/* NEW badge */}

@@ -33,8 +33,6 @@ interface ModelProfile {
     dfk: boolean;
     workingTime?: string;
     schedule?: string;
-    isAvailableNow?: boolean;
-    nextAvailable?: string;
     services?: Service[];
     bio?: string;
 }
@@ -305,17 +303,6 @@ const ModelProfilePage: React.FC = () => {
                                         {model.workingTime}
                                     </p>
                                 )}
-
-                                {/* Availability line */}
-                                {model.isAvailableNow ? (
-                                    <div className="text-5xl mt-4 font-bold text-red-500">
-                                        <span className="animate-glow">AVAILABLE NOW</span>
-                                    </div>
-                                ) : model.nextAvailable ? (
-                                    <div className="text-3xl mt-2 font-bold text-red-400">
-                                        NEXT AVAILABLE: {model.nextAvailable}
-                                    </div>
-                                ) : null}
                             </div>
 
 
