@@ -1,132 +1,111 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import ProfileLayout from './components/ProfileLayout';
-import data from './data/data.json';
+import React, { useEffect, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import ProfileLayout from "./components/ProfileLayout";
+import { ArrowLeft } from "lucide-react";
 
 interface NewsItem {
-  date: string;
+  id: number;
   title: string;
-  body: string;
+  publish_date: string;
+  is_public: boolean;
+  content: string;
+  media: {
+    id: number;
+    file_url: string;
+    file_type: string;
+  }[];
 }
 
+const NEWS_URL = "/api/uuozkzutzpgf/news/";
+
 const NewsPostPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const [newsItem, setNewsItem] = useState<NewsItem | null>(null);
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const newsId = Number(id);
+
+  const [post, setPost] = useState<NewsItem | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id) {
-      const index = parseInt(id);
-      const sorted = [...data.news].sort((a, b) => 
-        new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
-      setNewsItem(sorted[index] || null);
+    if (!newsId || Number.isNaN(newsId)) {
+      setErrorMsg("Invalid news id.");
+      setLoading(false);
+      return;
     }
-  }, [id]);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-AU', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  };
+    setLoading(true);
+    setErrorMsg(null);
 
-  if (!newsItem) {
-    return (
-      <ProfileLayout>
-        <div className="min-h-screen bg-black flex items-center justify-center">
-          <div className="text-center">
-            <h2
-              className="text-6xl font-bold mb-4"
-              style={{
-                background: 'linear-gradient(to right, #ff2b2b, #ff8800)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                textShadow: '0 0 8px rgba(255,60,60,0.9)',
-              }}
-            >
-              404
-            </h2>
-            <p className="text-gray-400 text-2xl mb-6">Article not found</p>
-            <a 
-              href="/#/news"
-              className="text-red-400 hover:text-red-300 transition-colors text-lg"
-            >
-              ← Back to news
-            </a>
-          </div>
-        </div>
-      </ProfileLayout>
-    );
-  }
+    fetch(NEWS_URL)
+      .then((res) => res.json())
+      .then((items: NewsItem[]) => {
+        const found = items.find((x) => x.id === newsId && x.is_public);
+        if (!found) {
+          setPost(null);
+          setErrorMsg("News post not found.");
+        } else {
+          setPost(found);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load news post", err);
+        setErrorMsg("Failed to load news post.");
+      })
+      .finally(() => setLoading(false));
+  }, [newsId]);
+
 
   return (
     <ProfileLayout>
-      <section className="min-h-screen bg-black relative overflow-hidden py-12">
-        {/* Subtle warm ambiance */}
-        <div
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(255,50,50,0.25) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(255,120,50,0.2) 1px, transparent 1px)
-            `,
-            backgroundSize: '30px 30px',
-          }}
-        />
-
-        <div className="max-w-3xl mx-auto px-6 relative z-10">
-          {/* Back Button */}
+      <section className="bg-black text-white relative overflow-hidden">
+        {/* Back button (same vibe as NewsPage) */}
+        <div className="p-6">
           <button
-            onClick={() => {
-              window.location.hash = '#/news';
-            }}
-            className="inline-flex items-center gap-2 mb-12 px-4 py-2 
-               text-red-400 hover:text-red-300
-               transition-all duration-300
-               uppercase tracking-wider text-sm
-               cursor-pointer"
+            onClick={() => navigate("/news")}
+            className="inline-flex items-center gap-2 text-red-400 hover:text-red-300
+              transition-all duration-300 uppercase tracking-wider text-sm cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to News
+            Back
           </button>
-
-          {/* Article */}
-          <article className="space-y-8">
-            {/* Date */}
-            <time className="block text-red-400 text-lg font-light">
-              {formatDate(newsItem.date)}
-            </time>
-
-            {/* Title */}
-            <h1
-              className="text-2xl font-bold leading-tight"
-              style={{
-                background: 'linear-gradient(to right, #ff2b2b, #ff8800)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                textShadow: '0 0 8px rgba(255,60,60,0.9), 0 0 20px rgba(255,100,50,0.8)',
-              }}
-            >
-              {newsItem.title}
-            </h1>
-
-            {/* Body Content */}
-            <div 
-              className="prose prose-invert prose-lg max-w-none
-                prose-p:text-gray-300 prose-p:text-xl prose-p:leading-relaxed
-                prose-img:rounded-none prose-img:my-8
-                prose-figcaption:text-gray-500 prose-figcaption:text-center
-                prose-figure:my-8"
-              dangerouslySetInnerHTML={{ __html: newsItem.body }}
-            />
-          </article>
-
-          {/* Bottom spacing */}
-          <div className="h-12"></div>
         </div>
+
+        {loading && (
+          <div className="px-6 pb-12">
+            <p className="opacity-70">Loading…</p>
+          </div>
+        )}
+
+        {!loading && errorMsg && (
+          <div className="px-6 pb-12">
+            <Link to="/news" className="text-white/70 hover:text-white">
+              ← Back to News
+            </Link>
+            <p className="mt-6 text-red-300">{errorMsg}</p>
+          </div>
+        )}
+
+        {!loading && !errorMsg && post && (
+          <>
+
+            <div className="p-6 max-w-3xl">
+              <h1 className="text-3xl font-bold">{post.title}</h1>
+
+              <p className="mt-2 text-white/60 text-sm">
+                {new Date(post.publish_date).toLocaleDateString("en-AU", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </p>
+
+              <div className="my-10 whitespace-pre-line text-white/90 leading-relaxed">
+                {post.content}
+              </div>
+            </div>
+          </>
+        )}
       </section>
     </ProfileLayout>
   );

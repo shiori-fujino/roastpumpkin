@@ -1,12 +1,12 @@
 import React from 'react';
 import { Phone, MapPin, Clock, Link2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
-
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Main content */}
@@ -46,22 +46,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </Link>
                   </li>
                   <li>
-                    <a
-                        href="/#/"
-  onClick={(e) => {
-    e.preventDefault();
-    window.location.hash = '#/';
-    setTimeout(() => {
-      const rosterSection = document.getElementById('roster');
-      if (rosterSection) {
-        rosterSection.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 300);
-  }}
-  className="text-gray-400 hover:text-red-500 transition-colors"
->
-  Roster
-</a>
+                    <button
+                      onClick={() => {
+                        navigate("/", { state: { scrollTo: "roster" } });
+                      }}
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      Roster
+                    </button>
+
                   </li>
                   <li>
                     <Link

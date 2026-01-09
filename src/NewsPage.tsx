@@ -1,33 +1,57 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft } from 'lucide-react';
-import ProfileLayout from './components/ProfileLayout';
-import data from './data/data.json';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { ArrowLeft } from "lucide-react";
+import ProfileLayout from "./components/ProfileLayout";
+import { Link, useNavigate } from "react-router-dom";
 
+/* ---------------- Types ---------------- */
 
 interface NewsItem {
-  date: string;
+  id: number;
   title: string;
-  body: string;
+  publish_date: string;
+  is_public: boolean;
+  content: string;
+  media: {
+    id: number;
+    file_url: string;
+    file_type: string;
+  }[];
 }
 
+// IMPORTANT: use the same proxy pattern as roster/providers
+const NEWS_URL = "/api/uuozkzutzpgf/news/";
+
+/* ---------------- Component ---------------- */
+
 const NewsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [news, setNews] = useState<NewsItem[]>([]);
 
   useEffect(() => {
-    // Sort by date descending (newest first)
-    const sorted = [...data.news].sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-    setNews(sorted);
+    fetch(NEWS_URL)
+      .then((res) => res.json())
+      .then((items: NewsItem[]) => {
+        const sorted = items
+          .filter((x) => x.is_public)
+          .sort(
+            (a, b) =>
+              +new Date(b.publish_date) -
+              +new Date(a.publish_date)
+          );
+
+        setNews(sorted);
+      })
+      .catch((err) => {
+        console.error("Failed to load news", err);
+      });
   }, []);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-AU', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString("en-AU", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -42,7 +66,7 @@ const NewsPage: React.FC = () => {
               linear-gradient(rgba(255,50,50,0.25) 1px, transparent 1px),
               linear-gradient(90deg, rgba(255,120,50,0.2) 1px, transparent 1px)
             `,
-            backgroundSize: '30px 30px',
+            backgroundSize: "30px 30px",
           }}
         />
 
@@ -50,13 +74,18 @@ const NewsPage: React.FC = () => {
           {/* Back Button */}
           <button
             onClick={() => {
-              window.location.hash = '#/';
+              window.history.replaceState(
+                null,
+                "",
+                window.location.pathname
+              );
+              navigate("/");
             }}
             className="inline-flex items-center gap-2 mb-12 px-4 py-2 
-               text-red-400 hover:text-red-300
-               transition-all duration-300
-               uppercase tracking-wider text-sm
-               cursor-pointer"
+              text-red-400 hover:text-red-300
+              transition-all duration-300
+              uppercase tracking-wider text-sm
+              cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
@@ -67,10 +96,11 @@ const NewsPage: React.FC = () => {
             <h1
               className="text-3xl font-bold mb-6"
               style={{
-                background: 'linear-gradient(to right, #ff2b2b, #ff8800)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                textShadow: '0 0 8px rgba(255,60,60,0.9), 0 0 20px rgba(255,100,50,0.8)',
+                background: "linear-gradient(to right, #ff2b2b, #ff8800)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                textShadow:
+                  "0 0 8px rgba(255,60,60,0.9), 0 0 20px rgba(255,100,50,0.8)",
               }}
             >
               News & Updates
@@ -82,16 +112,16 @@ const NewsPage: React.FC = () => {
 
           {/* News List */}
           <div className="space-y-6">
-            {news.map((item, index) => (
+            {news.map((item) => (
               <Link
-                key={index}
-                to={`/news/${index}`}
+                key={item.id}
+                to={`/news/${item.id}`}
                 className="group block"
               >
                 <div className="flex items-baseline py-6 border-b border-red-900/20 hover:border-red-500/30 transition-all">
                   {/* Date */}
                   <time className="text-red-400 text-lg font-light min-w-[120px] group-hover:text-red-300 transition-colors">
-                    {formatDate(item.date)}
+                    {formatDate(item.publish_date)}
                   </time>
 
                   {/* Title */}
@@ -108,8 +138,7 @@ const NewsPage: React.FC = () => {
             ))}
           </div>
 
-          {/* Bottom spacing */}
-          <div className="h-12"></div>
+          <div className="h-12" />
         </div>
       </section>
     </ProfileLayout>

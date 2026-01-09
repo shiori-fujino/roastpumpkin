@@ -1,12 +1,14 @@
 import React from 'react';
 import { Phone, MapPin, Clock, Link2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface ProfileLayoutProps {
   children: React.ReactNode;
 }
 
 const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Main content - NO SNAP SCROLLING */}
@@ -14,13 +16,15 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
         {children}
 
         {/* Footer - normal flow */}
-        <footer className="relative bg-black border-t border-red-500/50 py-12 min-h-screen flex items-center"
+        <footer
+          className="relative bg-black border-t border-red-500/50 py-12 min-h-screen flex items-center"
           style={{
             boxShadow: "0 -10px 12px rgba(255,60,60,0.15)" // layered glow
           }}
         >
           {/* Background effect */}
-          <div className="absolute inset-0 opacity-5"
+          <div
+            className="absolute inset-0 opacity-5"
             style={{
               backgroundImage: `
               linear-gradient(rgba(255,0,255,0.3) 1px, transparent 1px),
@@ -55,24 +59,17 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
                       Contact Us
                     </Link>
                   </li>
+
+                  {/* ✅ Roster: go home + scrollTo roster via state (no hash) */}
                   <li>
-                    <a
-                      href="/#/"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        window.location.hash = '#/';
-                        setTimeout(() => {
-                          const rosterSection = document.getElementById('roster');
-                          if (rosterSection) {
-                            rosterSection.scrollIntoView({ behavior: 'smooth' });
-                          }
-                        }, 300);
-                      }}
+                    <button
+                      onClick={() => navigate("/", { state: { scrollTo: "roster" } })}
                       className="text-gray-400 hover:text-red-500 transition-colors"
                     >
                       Roster
-                    </a>
+                    </button>
                   </li>
+
                   <li>
                     <Link
                       to="/news"
@@ -84,19 +81,19 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
                 </ul>
               </div>
 
-
-
               {/* Location */}
               <div>
                 <h3 className="text-red-700 font-bold text-lg mb-4 flex items-center gap-2">
                   <MapPin className="w-5 h-5" />
                   LOCATION
                 </h3>
-                <a href="https://www.google.com/maps/dir//Sydenham+Station,+Marrickville+NSW+2204"
+                <a
+                  href="https://www.google.com/maps/dir//Sydenham+Station,+Marrickville+NSW+2204"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-400 hover:text-red-500 transition-colors block"
-                >                  Near Sydenham Station<br />
+                >
+                  Near Sydenham Station<br />
                   Marrickville, NSW 2204<br />
                   Sydney, Australia
                 </a>

@@ -1,8 +1,11 @@
 import React from 'react';
 import { ArrowLeft, Phone } from 'lucide-react';
 import ProfileLayout from './components/ProfileLayout';
+import { useNavigate } from 'react-router-dom';
 
 const RatesPage: React.FC = () => {
+    const navigate = useNavigate();
+
     return (
         <ProfileLayout>
             <section className="min-h-screen bg-black relative overflow-hidden py-12">
@@ -21,9 +24,7 @@ const RatesPage: React.FC = () => {
                 <div className="max-w-3xl mx-auto px-6 relative z-10">
                     {/* Back Button */}
                     <button
-                        onClick={() => {
-                            window.location.hash = '#/';
-                        }}
+                        onClick={() => navigate(-1)}
                         className="inline-flex items-center gap-2 mb-12 px-4 py-2 
                text-red-400 hover:text-red-300
                transition-all duration-300
@@ -80,9 +81,7 @@ const RatesPage: React.FC = () => {
                         </div>
 
                         {/* Divider */}
-                        <div className="flex items-center gap-4 my-12">
-                            
-                        </div>
+                        <div className="flex items-center gap-4 my-12"></div>
 
                         {/* Service Information */}
                         <div>
@@ -108,9 +107,7 @@ const RatesPage: React.FC = () => {
                         </div>
 
                         {/* Divider */}
-                        <div className="flex items-center gap-4 my-12">
-                       
-                        </div>
+                        <div className="flex items-center gap-4 my-12"></div>
 
                         {/* Closing CTA */}
                         <div className="text-center py-12">
@@ -118,8 +115,8 @@ const RatesPage: React.FC = () => {
                                 Any questions? Just give us a call.
                             </p>
 
-
-                            <a href="tel:+61417888123"
+                            <a
+                                href="tel:+61417888123"
                                 className="inline-flex items-center gap-3 text-2xl text-red-500 hover:text-red-300 transition-all duration-300"
                             >
                                 <Phone className="w-6 h-6" />

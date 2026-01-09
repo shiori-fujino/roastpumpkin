@@ -1,8 +1,11 @@
 import React from 'react';
 import { ArrowLeft, Phone, MapPin, Briefcase } from 'lucide-react';
 import ProfileLayout from './components/ProfileLayout';
+import { useNavigate } from 'react-router-dom';
 
 const ContactPage: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <ProfileLayout>
       <section className="relative  bg-black overflow-hidden py-12">
@@ -22,7 +25,7 @@ const ContactPage: React.FC = () => {
 
           {/* Back */}
           <button
-            onClick={() => (window.location.hash = '/')}
+            onClick={() => navigate(-1)}
             className="inline-flex items-center gap-2 mb-12 text-sm text-red-400 hover:text-red-300 transition"
           >
             <ArrowLeft className="w-4 h-4" />
