@@ -96,11 +96,10 @@ const BannerSwipe: React.FC<BannerSwipeProps> = ({ banners }) => {
         {banners.map((banner, index) => (
           <div
             key={banner.id}
-            className={`absolute inset-0 transition-all duration-500 ${
-              index === currentIndex
+            className={`absolute inset-0 transition-all duration-500 ${index === currentIndex
                 ? "opacity-100 scale-100 z-10"
                 : "opacity-0 scale-95 pointer-events-none"
-            }`}
+              }`}
             onClick={() => {
               if (index === currentIndex && banner.newsId !== undefined) {
                 navigate(`/news/${banner.newsId}`);
@@ -125,24 +124,32 @@ const BannerSwipe: React.FC<BannerSwipeProps> = ({ banners }) => {
           </div>
         ))}
       </div>
+      {/* Scroll hint */}
+      <div className="absolute bottom-16 left-0 right-0 z-10 flex justify-center pointer-events-none">
+        <div className="flex flex-col items-center gap-2 opacity-80">
+          <div className="h-7 w-5 rounded-full border border-white/30 flex items-start justify-center p-1">
+            <div className="h-1.5 w-1.5 rounded-full bg-white/60 animate-[scrollDot_1.6s_ease-in-out_infinite]" />
+          </div>
 
-      {/* Progress dots */}
-      <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-2 z-10">
-        {banners.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              setCurrentIndex(index);
-              resetAutoPlay();
-            }}
-            className={`transition-all ${
-              index === currentIndex
-                ? "w-8 h-2 bg-gradient-to-r from-red-500 to-red-900"
-                : "w-2 h-2 bg-white/30 hover:bg-white/50"
-            } rounded-full`}
-          />
-        ))}
+          <svg
+            className="h-6 w-6 text-white/50 animate-bounce"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </div>
       </div>
+      
+{/* Counter (top-right) */}
+<div className="absolute top-6 right-6 z-20 text-white/60 text-sm tracking-[0.25em] select-none">
+  {String(currentIndex + 1).padStart(2, "0")} / {String(banners.length).padStart(2, "0")}
+</div>
     </section>
   );
 };

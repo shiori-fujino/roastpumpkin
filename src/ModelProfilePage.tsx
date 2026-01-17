@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Phone, Check, X, ArrowLeft } from "lucide-react";
 import ProfileLayout from "./components/ProfileLayout";
 
-const PROVIDERS_URL = "/api/uuozkzutzpgf/providers/";
+const PROVIDERS_URL = "/api/providers/";
 
 /* ---------------- Types ---------------- */
 

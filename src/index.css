@@ -29,6 +29,12 @@
   }
 }
 
+@keyframes scrollDot {
+  0% { transform: translateY(0); opacity: .2; }
+  30% { opacity: .9; }
+  60% { transform: translateY(10px); opacity: .4; }
+  100% { transform: translateY(0); opacity: .2; }
+}
 
 .animate-glow {
   animation: glowPulse 1.8s ease-in-out infinite;

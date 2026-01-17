@@ -6,10 +6,10 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://www.no5marrickville.com",
+        target: "https://n5m.au",
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
+        followRedirects: true,
       },
     },
   },

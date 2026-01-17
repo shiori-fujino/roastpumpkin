@@ -19,7 +19,7 @@ interface NewsItem {
 }
 
 // IMPORTANT: use the same proxy pattern as roster/providers
-const NEWS_URL = "/api/uuozkzutzpgf/news/";
+const NEWS_URL = "/api/news/";
 
 /* ---------------- Component ---------------- */
 

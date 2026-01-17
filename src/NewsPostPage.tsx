@@ -16,7 +16,7 @@ interface NewsItem {
   }[];
 }
 
-const NEWS_URL = "/api/uuozkzutzpgf/news/";
+const NEWS_URL = "/api/news/";
 
 const NewsPostPage: React.FC = () => {
   const navigate = useNavigate();
