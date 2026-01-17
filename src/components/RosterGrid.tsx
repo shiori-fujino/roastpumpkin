@@ -552,7 +552,7 @@ const RosterGrid: React.FC = () => {
                 <img
                   src={model.image}
                   alt={model.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="w-full h-full object-cover object-[center_35%] transition-transform duration-500 group-hover:scale-110"
                 />
 
                 {model.isNew && (
