@@ -3,14 +3,18 @@ import Homepage from "./Homepage";
 import ModelProfilePage from "./ModelProfilePage";
 import RatesPage from "./RatesPage";
 import ContactPage from "./ContactPage";
-import ScrollToTop from "./components/ScrollToTop";
 import NewsPage from "./NewsPage";
 import NewsPostPage from "./NewsPostPage";
+
+import LanguageToggle from "./components/LanguageToggle";
 
 function App() {
   return (
     <BrowserRouter>
-      <ScrollToTop />
+
+      {/* ✅ ONE global toggle, always visible */}
+      <LanguageToggle />
+
       <Routes>
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/news" element={<NewsPage />} />

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import ProfileLayout from "./components/ProfileLayout";
+import Layout from "./components/Layout";
 import { ArrowLeft } from "lucide-react";
 
 interface NewsItem {
@@ -57,7 +57,7 @@ const NewsPostPage: React.FC = () => {
 
 
   return (
-    <ProfileLayout>
+    <Layout>
       <section className="bg-black text-white relative overflow-hidden">
         {/* Back button (same vibe as NewsPage) */}
         <div className="p-6">
@@ -107,7 +107,7 @@ const NewsPostPage: React.FC = () => {
           </>
         )}
       </section>
-    </ProfileLayout>
+    </Layout>
   );
 };
 

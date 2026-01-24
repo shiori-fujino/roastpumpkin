@@ -1,13 +1,13 @@
 import React from 'react';
 import { ArrowLeft, Phone } from 'lucide-react';
-import ProfileLayout from './components/ProfileLayout';
 import { useNavigate } from 'react-router-dom';
+import Layout from './components/Layout';
 
 const RatesPage: React.FC = () => {
     const navigate = useNavigate();
 
     return (
-        <ProfileLayout>
+        <Layout>
             <section className="min-h-screen bg-black relative overflow-hidden py-12">
                 {/* Subtle warm ambiance */}
                 <div
@@ -131,7 +131,7 @@ const RatesPage: React.FC = () => {
                     </div>
                 </div>
             </section>
-        </ProfileLayout>
+        </Layout>
     );
 };
 

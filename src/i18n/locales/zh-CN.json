@@ -1,0 +1,78 @@
+{
+    "menu": {
+        "rateService": "价目与服务",
+        "roster": "今日上班",
+        "contact": "联系方式",
+        "homepage": "首页",
+        "news": "新闻"
+    },
+    "footer": {
+        "quickLinks": "快速链接",
+        "locationTitle": "地址",
+        "hoursTitle": "营业时间",
+        "contactTitle": "联系",
+        "locationLine1": "靠近 Sydenham 车站",
+        "locationLine2": "Marrickville, NSW 2204",
+        "locationLine3": "悉尼，澳大利亚",
+        "hoursLine1": "全年无休",
+        "hoursLine2": "10:00 AM - 3:00 AM"
+    },
+    "roster": {
+        "today": "今日排班",
+        "tomorrow": "明日排班",
+        "loadingTitle": "正在加载排班…",
+        "loadingSubtitle": "请稍等",
+        "tomorrowReleaseTitle": "明日排班将于{{time}}发布（悉尼时间）",
+        "tomorrowReleaseSubtitle": "请稍后再来查看",
+        "emptyTitle": "没有符合筛选条件的女生"
+    },
+  "filter": {
+    "filters": "筛选",
+    "nationality": "国籍",
+    "clear": "清除筛选"
+  },
+    "common": {
+        "loading": "加载中…",
+        "back": "返回",
+        "noImage": "暂无图片",
+        "bookNow": "立即预约"
+    },
+    "badges": {
+        "realPhoto": "真实照片",
+        "new": "新女孩"
+    },
+    "rates": {
+        "min30": "30分钟",
+        "min45": "45分钟",
+        "min60": "60分钟"
+    },
+    "profile": {
+        "from": "国籍",
+        "cup": "罩杯",
+        "height": "身高",
+        "weight": "体重",
+        "dressSize": "衣码",
+        "figure": "身材",
+        "hair": "发色",
+        "skin": "肤色",
+        "tattoos": "纹身",
+        "pubes": "阴毛",
+        "requirements": "要求",
+        "availableServices": "可提供服务",
+        "about": "关于"
+    },
+    "services": {
+        "bbbj": "裸吹",
+        "cim": "口爆",
+        "dfk": "法式深吻",
+        "69": "六九",
+        "rimming": "毒龙",
+        "filming": "摄影",
+        "cbj": "戴套吹",
+        "massage": "按摩",
+        "gfe": "女友感",
+        "pse": "女优感",
+        "double": "双飞",
+        "shower": "共浴"
+    }
+}

@@ -147,7 +147,7 @@ const BannerSwipe: React.FC<BannerSwipeProps> = ({ banners }) => {
       </div>
       
 {/* Counter (top-right) */}
-<div className="absolute top-6 right-6 z-20 text-white/60 text-sm tracking-[0.25em] select-none">
+<div className="absolute top-6 left-6 z-20 text-white/60 text-sm tracking-[0.25em] select-none">
   {String(currentIndex + 1).padStart(2, "0")} / {String(banners.length).padStart(2, "0")}
 </div>
     </section>

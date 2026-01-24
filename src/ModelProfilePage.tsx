@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Phone, Check, X, ArrowLeft } from "lucide-react";
-import ProfileLayout from "./components/ProfileLayout";
+import { useTranslation } from "react-i18next";
+import Layout from "./components/Layout";
 
 const PROVIDERS_URL = "/api/providers/";
 
@@ -130,18 +131,18 @@ function imagesFromProviderWithMeta(p: ApiProvider): ImgItem[] {
 
 function servicesFromProvider(p: ApiProvider): Service[] {
   const flags: Service[] = [
-    { name: "BBBJ", available: bool(p.service_bbbj) },
-    { name: "CIM", available: bool(p.service_cim) },
-    { name: "DFK", available: bool(p.service_dfk) },
+    { name: "bbbj", available: bool(p.service_bbbj) },
+    { name: "cim", available: bool(p.service_cim) },
+    { name: "dfk", available: bool(p.service_dfk) },
     { name: "69", available: bool(p.service_69) },
-    { name: "Rimming", available: bool(p.service_rimming) },
-    { name: "Filming", available: bool(p.service_filming) },
-    { name: "CBJ", available: bool(p.service_cbj) },
-    { name: "Massage", available: bool(p.service_massage) },
-    { name: "GFE", available: bool(p.service_gfe) },
-    { name: "PSE", available: bool(p.service_pse) },
-    { name: "Double", available: bool(p.service_double) },
-    { name: "Shower Together", available: bool(p.service_shower) },
+    { name: "rimming", available: bool(p.service_rimming) },
+    { name: "filming", available: bool(p.service_filming) },
+    { name: "cbj", available: bool(p.service_cbj) },
+    { name: "massage", available: bool(p.service_massage) },
+    { name: "gfe", available: bool(p.service_gfe) },
+    { name: "pse", available: bool(p.service_pse) },
+    { name: "double", available: bool(p.service_double) },
+    { name: "shower", available: bool(p.service_shower) },
   ];
 
   // If backend flags actually contain info, trust them.
@@ -185,6 +186,7 @@ function priceOrUndef(v: unknown): number | undefined {
 const ModelProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   // IMPORTANT: make route param :slug (App.tsx must match)
   const { slug } = useParams<{ slug: string }>();
@@ -229,15 +231,15 @@ const ModelProfilePage: React.FC = () => {
           return;
         }
 
-/** ✅ NEW: get meta + plain string list */
-// 1) load all images (sorted by priority)
-// 2) remove profile:true from gallery (low-res thumb)
-// 3) if that removes everything, fall back to all images (safety)
-const imgsMetaAll = imagesFromProviderWithMeta(found);
-const imgsMeta = imgsMetaAll.filter((x) => !x.profile);
-const finalMeta = imgsMeta.length > 0 ? imgsMeta : imgsMetaAll;
+        /** ✅ NEW: get meta + plain string list */
+        // 1) load all images (sorted by priority)
+        // 2) remove profile:true from gallery (low-res thumb)
+        // 3) if that removes everything, fall back to all images (safety)
+        const imgsMetaAll = imagesFromProviderWithMeta(found);
+        const imgsMeta = imgsMetaAll.filter((x) => !x.profile);
+        const finalMeta = imgsMeta.length > 0 ? imgsMeta : imgsMetaAll;
 
-const imgs = finalMeta.map((x) => x.src);
+        const imgs = finalMeta.map((x) => x.src);
 
 
         const services = servicesFromProvider(found);
@@ -284,7 +286,7 @@ const imgs = finalMeta.map((x) => x.src);
 
         if (!cancelled) {
           setModel(mapped);
-          setImageMeta(finalMeta); 
+          setImageMeta(finalMeta);
           setCurrentImageIndex(0);
         }
       } catch (e: any) {
@@ -324,17 +326,17 @@ const imgs = finalMeta.map((x) => x.src);
 
   if (loading) {
     return (
-      <ProfileLayout>
+      <Layout>
         <div className="min-h-screen bg-black flex items-center justify-center">
-          <p className="text-gray-400 text-xl">Loading profile…</p>
+          <p className="text-gray-400 text-xl">{t("common.loading")}</p>
         </div>
-      </ProfileLayout>
+      </Layout>
     );
   }
 
   if (!model) {
     return (
-      <ProfileLayout>
+      <Layout>
         <div className="min-h-screen bg-black flex items-center justify-center">
           <div className="text-center">
             <h2
@@ -350,21 +352,21 @@ const imgs = finalMeta.map((x) => x.src);
 
             {apiError ? (
               <p className="text-gray-400 text-xl">
-                Provider load failed 😢 ({apiError})
+                {t("profile.loadFailed")} 😢 ({apiError})
               </p>
             ) : (
-              <p className="text-gray-400 text-xl">Girl not found 😢</p>
+              <p className="text-gray-400 text-xl">{t("profile.notFound")} 😢</p>
             )}
           </div>
         </div>
-      </ProfileLayout>
+      </Layout>
     );
   }
 
   /* ---------------- Main UI ---------------- */
 
   return (
-    <ProfileLayout>
+    <Layout>
       <section className="min-h-screen bg-black relative overflow-hidden py-12">
         {/* Cyberpunk background */}
         <div
@@ -379,23 +381,36 @@ const imgs = finalMeta.map((x) => x.src);
         />
 
         <div className="max-w-6xl mx-auto px-4 relative z-10">
-          {/* Back Button */}
-          <button
-            onClick={() => navigate("/", { state: { scrollTo: "roster" } })}
-            className="inline-flex items-center gap-2 mb-6 px-4 py-2 
-              bg-gradient-to-r from-red-600/20 to-red-800/20 
-              border border-red-500/50 
-              text-red-400 hover:text-red-300
-              hover:bg-red-600/30 hover:border-red-400
-              transition-all duration-300
-              uppercase tracking-wider font-bold text-sm
-              shadow-[0_0_15px_rgba(255,40,40,0.3)]
-              hover:shadow-[0_0_25px_rgba(255,40,40,0.5)]
-              cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Go Back to Roster
-          </button>
+          {/* n5 – Back to roster (smart) */}
+<button
+  onClick={() => {
+    if (window.history.state?.idx > 0) {
+      navigate(-1);
+      return;
+    }
+    navigate(
+      { pathname: "/", search: window.location.search, hash: "#roster" },
+      { state: { scrollTo: "roster" } }
+    );
+  }}
+  className="
+    inline-flex items-center gap-2
+    mb-6 px-4 py-2
+    border border-red-500/40
+    bg-black/60
+    text-red-400
+    hover:text-red-300
+    hover:bg-red-500/10
+    transition-all
+    uppercase tracking-wider text-sm font-bold
+  "
+>
+  <ArrowLeft className="w-4 h-4" />
+  Back to Roster
+</button>
+
+
+
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column - Image Carousel */}
@@ -420,8 +435,7 @@ const imgs = finalMeta.map((x) => x.src);
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-600">
-                    No image
-                  </div>
+                    {t("common.noImage")}                  </div>
                 )}
 
                 {model.isNew && (
@@ -429,7 +443,7 @@ const imgs = finalMeta.map((x) => x.src);
                     className="absolute top-4 right-4 bg-red-500 text-white text-sm px-3 py-1 font-bold uppercase tracking-wider animate-pulse"
                     style={{ boxShadow: "0 0 15px rgba(255,0,255,0.8)" }}
                   >
-                    NEW
+                    {t("badges.new")}
                   </span>
                 )}
 
@@ -439,7 +453,7 @@ const imgs = finalMeta.map((x) => x.src);
                     className="absolute top-4 left-4 bg-emerald-400 text-black text-sm px-3 py-1 font-bold uppercase tracking-wider"
                     style={{ boxShadow: "0 0 12px rgba(16,185,129,0.9)" }}
                   >
-                    REAL PHOTO
+                    {t("badges.realPhoto")}
                   </span>
                 )}
 
@@ -466,11 +480,10 @@ const imgs = finalMeta.map((x) => x.src);
                       <button
                         key={index}
                         onClick={() => setCurrentImageIndex(index)}
-                        className={`h-2 transition-all ${
-                          index === currentImageIndex
+                        className={`h-2 transition-all ${index === currentImageIndex
                             ? "bg-gradient-to-r from-red-500 to-red-900 w-8"
                             : "bg-gray-700 w-2 hover:bg-gray-500"
-                        }`}
+                          }`}
                         style={{
                           boxShadow:
                             index === currentImageIndex
@@ -489,11 +502,10 @@ const imgs = finalMeta.map((x) => x.src);
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`flex-shrink-0 w-20 h-28 overflow-hidden transition-all border-2 ${
-                        index === currentImageIndex
+                      className={`flex-shrink-0 w-20 h-28 overflow-hidden transition-all border-2 ${index === currentImageIndex
                           ? "border-red-500 opacity-100"
                           : "border-gray-800 opacity-60 hover:opacity-100 hover:border-red-500/50"
-                      }`}
+                        }`}
                       style={{
                         boxShadow:
                           index === currentImageIndex
@@ -518,19 +530,19 @@ const imgs = finalMeta.map((x) => x.src);
                 </h3>
                 <div className="flex justify-evenly text-center">
                   <div>
-                    <p className="text-gray-400 text-xl mb-2">30 MIN</p>
+                    <p className="text-gray-400 text-xl mb-2">{t("rates.min30")}</p>
                     <p className="text-3xl font-bold text-white">
                       {typeof model.rates?.min30 === "number" ? `$${model.rates.min30}` : "—"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-400 text-xl mb-2">45 MIN</p>
+                    <p className="text-gray-400 text-xl mb-2">{t("rates.min45")}</p>
                     <p className="text-3xl font-bold text-white">
                       {typeof model.rates?.min45 === "number" ? `$${model.rates.min45}` : "—"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-400 text-xl mb-2">60 MIN</p>
+                    <p className="text-gray-400 text-xl mb-2">{t("rates.min60")}</p>
                     <p className="text-3xl font-bold text-white">
                       {typeof model.rates?.min60 === "number" ? `$${model.rates.min60}` : "—"}
                     </p>
@@ -571,61 +583,61 @@ const imgs = finalMeta.map((x) => x.src);
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   {model.nationality && (
                     <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">Nationality</span>
+                      <span className="text-gray-500 uppercase text-lg">{t("profile.from")}</span>
                       <p className="text-white font-bold text-2xl">{model.nationality}</p>
                     </div>
                   )}
                   {model.height && (
                     <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">Height</span>
+                      <span className="text-gray-500 uppercase text-lg">{t("profile.height")}</span>
                       <p className="text-white font-bold text-2xl">{model.height} cm</p>
                     </div>
                   )}
                   {model.weight && (
                     <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">Weight</span>
+                      <span className="text-gray-500 uppercase text-lg">{t("profile.weight")}</span>
                       <p className="text-white font-bold text-2xl">{model.weight} kg</p>
                     </div>
                   )}
                   {model.bust && (
                     <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">Bust</span>
+                      <span className="text-gray-500 uppercase text-lg">{t("profile.cup")}</span>
                       <p className="text-white font-bold text-2xl">{model.bust}</p>
                     </div>
                   )}
                   {model.dressSize && (
                     <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">Dress Size</span>
+                      <span className="text-gray-500 uppercase text-lg">{t("profile.dressSize")}</span>
                       <p className="text-white font-bold text-2xl">{model.dressSize}</p>
                     </div>
                   )}
                   {model.figure && (
                     <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">Figure</span>
+                      <span className="text-gray-500 uppercase text-lg">{t("profile.figure")}</span>
                       <p className="text-white font-bold text-2xl">{model.figure}</p>
                     </div>
                   )}
                   {model.hair && (
                     <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">Hair</span>
+                      <span className="text-gray-500 uppercase text-lg">{t("profile.hair")}</span>
                       <p className="text-white font-bold text-2xl">{model.hair}</p>
                     </div>
                   )}
                   {model.skin && (
                     <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">Skin</span>
+                      <span className="text-gray-500 uppercase text-lg">{t("profile.skin")}</span>
                       <p className="text-white font-bold text-2xl">{model.skin}</p>
                     </div>
                   )}
                   {model.tattoos && (
                     <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">Tattoos</span>
+                      <span className="text-gray-500 uppercase text-lg">{t("profile.tattoos")}</span>
                       <p className="text-white font-bold text-2xl">{model.tattoos}</p>
                     </div>
                   )}
                   {model.pubes && (
                     <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">Pubes</span>
+                      <span className="text-gray-500 uppercase text-lg">{t("profile.pubes")}</span>
                       <p className="text-white font-bold text-2xl">{model.pubes}</p>
                     </div>
                   )}
@@ -642,17 +654,16 @@ const imgs = finalMeta.map((x) => x.src);
               {/* Available Services */}
               <div className="bg-gray-900 border border-red-500/30 p-6">
                 <h3 className="text-red-700 font-bold text-lg mb-4 uppercase tracking-widest">
-                  Available Services
+                  {t("profile.availableServices")}
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   {services.map((service) => (
                     <div
                       key={service.name}
-                      className={`flex items-center gap-2 p-3 border transition-all ${
-                        service.available
+                      className={`flex items-center gap-2 p-3 border transition-all ${service.available
                           ? "bg-red-900/20 border-red-500/50 text-white-500"
                           : "bg-gray-800/50 border-gray-700 text-gray-600"
-                      }`}
+                        }`}
                     >
                       {service.available ? (
                         <Check className="w-4 h-4 flex-shrink-0" />
@@ -660,11 +671,10 @@ const imgs = finalMeta.map((x) => x.src);
                         <X className="w-4 h-4 flex-shrink-0" />
                       )}
                       <span
-                        className={`text-2xl font-bold uppercase ${
-                          service.available ? "" : "line-through"
-                        }`}
+                        className={`text-2xl font-bold uppercase ${service.available ? "" : "line-through"
+                          }`}
                       >
-                        {service.name}
+                        {t(`services.${service.name}`)}
                       </span>
                     </div>
                   ))}
@@ -694,7 +704,7 @@ const imgs = finalMeta.map((x) => x.src);
           </div>
         </div>
       </section>
-    </ProfileLayout>
+    </Layout>
   );
 };
 

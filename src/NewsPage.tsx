@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
-import ProfileLayout from "./components/ProfileLayout";
+import Layout from "./components/Layout";
 import { Link, useNavigate } from "react-router-dom";
 
 /* ---------------- Types ---------------- */
@@ -56,7 +56,7 @@ const NewsPage: React.FC = () => {
   };
 
   return (
-    <ProfileLayout>
+    <Layout>
       <section className="min-h-screen bg-black relative overflow-hidden py-12">
         {/* Subtle warm ambiance */}
         <div
@@ -141,7 +141,7 @@ const NewsPage: React.FC = () => {
           <div className="h-12" />
         </div>
       </section>
-    </ProfileLayout>
+    </Layout>
   );
 };
 

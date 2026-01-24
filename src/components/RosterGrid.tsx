@@ -1,6 +1,8 @@
+// src/components/RosterGrid.tsx
 import React, { useMemo, useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // ✅ IMPORTANT: trailing slash to avoid redirect -> CORS
 const PROVIDERS_URL = "/api/providers/";
@@ -59,6 +61,9 @@ type ApiProvider = {
   service_pse?: boolean;
   service_double?: boolean;
   service_shower?: boolean;
+
+  // ✅ pricing
+  total_60?: number | string | null;
 };
 
 interface Service {
@@ -77,9 +82,18 @@ interface RosterModel {
   workingTime?: string;
   services?: Service[];
   isRealPhoto: boolean;
+
+  // ✅ hourly teaser for roster card
+  hourly?: number;
 }
 
 /* ---------------- Helpers ---------------- */
+
+function priceOrUndef(v: unknown): number | undefined {
+  const n = typeof v === "string" ? Number(v) : (v as number);
+  if (!Number.isFinite(n)) return undefined;
+  return n > 0 ? n : undefined;
+}
 
 function keyify(s: string) {
   return (s || "")
@@ -126,7 +140,6 @@ function servicesFromProvider(p: ApiProvider): Service[] {
   ];
 
   const anyTrue = flags.some(([, v]) => v === true);
-
   if (anyTrue) return flags.map(([name, v]) => ({ name, available: v === true }));
 
   // Fallback parse: "Service: BBBJ, DFK, ..."
@@ -170,10 +183,7 @@ function pickThumbnailFromProvider(p: ApiProvider): string {
   const profileImg = imgs.find((x) => x.profile === true)?.image;
   if (profileImg) return profileImg;
 
-  const best = imgs
-    .slice()
-    .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))[0]?.image;
-
+  const best = imgs.slice().sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))[0]?.image;
   return best || "";
 }
 
@@ -190,26 +200,107 @@ function shuffle<T>(array: T[]) {
   return arr;
 }
 
+// ✅ map rendered service names -> i18n keys
+function serviceKey(name: string) {
+  const k = (name || "").toLowerCase().trim();
+  if (k === "bbbj") return "bbbj";
+  if (k === "cim") return "cim";
+  if (k === "dfk") return "dfk";
+  if (k === "69") return "69";
+  if (k === "rimming") return "rimming";
+  if (k === "filming") return "filming";
+  if (k === "cbj") return "cbj";
+  if (k === "massage") return "massage";
+  if (k === "gfe") return "gfe";
+  if (k === "pse") return "pse";
+  if (k === "double") return "double";
+  if (k === "shower together") return "shower";
+  return k.replace(/\s+/g, "");
+}
+
 /* ---------------- Component ---------------- */
 
 const RosterGrid: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"today" | "tomorrow">("today");
-  const [currentBatch, setCurrentBatch] = useState(0);
-  const [showFilters, setShowFilters] = useState(false);
+  const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const BATCH_SIZE = useResponsiveBatchSize();
 
-  const [selectedNationalities, setSelectedNationalities] = useState<string[]>([]);
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  // ---- parse URL (single source of truth)
+  const tab = (searchParams.get("tab") as "today" | "tomorrow") || "today";
+  const nat = (searchParams.get("nat") || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const svc = (searchParams.get("svc") || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const page = Math.max(0, Number(searchParams.get("page") || "0") || 0);
+  const showFilters = searchParams.get("filters") === "1";
 
+  // ✅ patch helper (URL only)
+  const commitParams = useCallback(
+    (patch: {
+      tab?: "today" | "tomorrow";
+      nat?: string[];
+      svc?: string[];
+      page?: number;
+      filters?: boolean;
+    }) => {
+      const next = new URLSearchParams(searchParams);
+
+      if (patch.tab) next.set("tab", patch.tab);
+
+      if (patch.nat) {
+        if (patch.nat.length) next.set("nat", patch.nat.join(","));
+        else next.delete("nat");
+      }
+
+      if (patch.svc) {
+        if (patch.svc.length) next.set("svc", patch.svc.join(","));
+        else next.delete("svc");
+      }
+
+      if (typeof patch.page === "number") next.set("page", String(patch.page));
+
+      if (typeof patch.filters === "boolean") {
+        if (patch.filters) next.set("filters", "1");
+        else next.delete("filters");
+      }
+
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams]
+  );
+
+  // ✅ ensure defaults exist (tab/page)
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    let changed = false;
+
+    if (!next.get("tab")) {
+      next.set("tab", "today");
+      changed = true;
+    }
+    if (!next.get("page")) {
+      next.set("page", "0");
+      changed = true;
+    }
+
+    if (changed) setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  // ----- touch swipe state (local is fine)
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
 
+  // ----- API state
   const [providers, setProviders] = useState<ApiProvider[] | null>(null);
   const [apiToday, setApiToday] = useState<ApiRosterEntry[] | null>(null);
   const [apiTomorrow, setApiTomorrow] = useState<ApiRosterEntry[] | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const BATCH_SIZE = useResponsiveBatchSize();
-
+  // ---- fetch
   useEffect(() => {
     let cancelled = false;
 
@@ -251,10 +342,7 @@ const RosterGrid: React.FC = () => {
     };
   }, []);
 
-  useEffect(() => setCurrentBatch(0), [BATCH_SIZE]);
-  useEffect(() => setCurrentBatch(0), [activeTab]);
-  useEffect(() => setCurrentBatch(0), [selectedNationalities, selectedServices]);
-
+  // ---- mapping helpers
   const upsertBest = (map: Map<string, ApiProvider>, key: string, p: ApiProvider) => {
     const prev = map.get(key);
     if (!prev || p.id > prev.id) map.set(key, p);
@@ -266,7 +354,6 @@ const RosterGrid: React.FC = () => {
     return map;
   }, [providers]);
 
-  // legacy fallback maps
   const providerByName = useMemo(() => {
     const map = new Map<string, ApiProvider>();
     for (const p of providers || []) upsertBest(map, keyify(p.provider_name), p);
@@ -286,7 +373,7 @@ const RosterGrid: React.FC = () => {
   }, [providers]);
 
   const currentRoster: RosterModel[] = useMemo(() => {
-    const roster = activeTab === "today" ? apiToday : apiTomorrow;
+    const roster = tab === "today" ? apiToday : apiTomorrow;
     if (!roster || !providers) return [];
 
     return roster
@@ -315,21 +402,12 @@ const RosterGrid: React.FC = () => {
           isRealPhoto: hasAnyRealPhoto(p),
           workingTime: formatWorkingTime(entry.start_time, entry.end_time),
           services: servicesFromProvider(p),
+          hourly: priceOrUndef(p.total_60),
         } as RosterModel;
       })
       .filter(Boolean) as RosterModel[];
-  }, [
-    activeTab,
-    apiToday,
-    apiTomorrow,
-    providers,
-    providerById,
-    providerByName,
-    providerBySlug,
-    providerByBaseSlug,
-  ]);
+  }, [tab, apiToday, apiTomorrow, providers, providerById, providerByName, providerBySlug, providerByBaseSlug]);
 
-  // ✅ NEW always on top, rest shuffled ONCE per roster load (refresh -> new order)
   const randomizedRoster = useMemo(() => {
     if (!currentRoster.length) return [];
     const newOnes = currentRoster.filter((m) => m.isNew);
@@ -342,7 +420,7 @@ const RosterGrid: React.FC = () => {
     [randomizedRoster]
   );
 
-  const services = useMemo(() => {
+  const serviceFilterLabels = useMemo(() => {
     return [
       ...new Set(
         randomizedRoster
@@ -353,55 +431,58 @@ const RosterGrid: React.FC = () => {
   }, [randomizedRoster]);
 
   const modelHasAllSelectedServices = (model: RosterModel) => {
-    if (selectedServices.length === 0) return true;
+    if (svc.length === 0) return true;
     const available = (model.services || []).filter((s) => s.available).map((s) => s.name);
-    return selectedServices.every((s) => available.includes(s));
+    return svc.every((s) => available.includes(s));
   };
 
   const filteredRoster = useMemo(() => {
     return randomizedRoster.filter((model) => {
-      if (selectedNationalities.length > 0 && !selectedNationalities.includes(model.nationality)) return false;
+      if (nat.length > 0 && !nat.includes(model.nationality)) return false;
       if (!modelHasAllSelectedServices(model)) return false;
       return true;
     });
-  }, [randomizedRoster, selectedNationalities, selectedServices]);
+  }, [randomizedRoster, nat, svc]);
 
   const totalBatches = Math.max(1, Math.ceil(filteredRoster.length / BATCH_SIZE));
-
-  // ✅ Looping page index (always valid)
-  const safeCurrentBatch = useMemo(() => {
-    return ((currentBatch % totalBatches) + totalBatches) % totalBatches;
-  }, [currentBatch, totalBatches]);
+  const safePage = useMemo(() => ((page % totalBatches) + totalBatches) % totalBatches, [page, totalBatches]);
 
   const currentBatchModels = useMemo(() => {
-    return filteredRoster.slice(
-      safeCurrentBatch * BATCH_SIZE,
-      (safeCurrentBatch + 1) * BATCH_SIZE
-    );
-  }, [filteredRoster, safeCurrentBatch, BATCH_SIZE]);
+    return filteredRoster.slice(safePage * BATCH_SIZE, (safePage + 1) * BATCH_SIZE);
+  }, [filteredRoster, safePage, BATCH_SIZE]);
+
+  // ✅ if URL page is out of range (after filters), snap to 0
+  useEffect(() => {
+    if (page >= totalBatches) {
+      commitParams({ page: 0 });
+    }
+  }, [page, totalBatches, commitParams]);
 
   const goPrev = useCallback(() => {
-    setCurrentBatch((prev) => (prev - 1 + totalBatches) % totalBatches);
-  }, [totalBatches]);
+    const next = (safePage - 1 + totalBatches) % totalBatches;
+    commitParams({ page: next });
+  }, [safePage, totalBatches, commitParams]);
 
   const goNext = useCallback(() => {
-    setCurrentBatch((prev) => (prev + 1) % totalBatches);
-  }, [totalBatches]);
+    const next = (safePage + 1) % totalBatches;
+    commitParams({ page: next });
+  }, [safePage, totalBatches, commitParams]);
 
-  const toggleNationality = (nat: string) => {
-    setSelectedNationalities((prev) => (prev.includes(nat) ? prev.filter((n) => n !== nat) : [...prev, nat]));
+  const toggleNationality = (n: string) => {
+    const next = nat.includes(n) ? nat.filter((x) => x !== n) : [...nat, n];
+    commitParams({ nat: next, page: 0 });
   };
 
-  const toggleService = (service: string) => {
-    setSelectedServices((prev) => (prev.includes(service) ? prev.filter((s) => s !== service) : [...prev, service]));
+  const toggleService = (s: string) => {
+    const next = svc.includes(s) ? svc.filter((x) => x !== s) : [...svc, s];
+    commitParams({ svc: next, page: 0 });
   };
 
   const clearFilters = () => {
-    setSelectedNationalities([]);
-    setSelectedServices([]);
+    commitParams({ nat: [], svc: [], page: 0 });
   };
 
-  const activeFilterCount = selectedNationalities.length + selectedServices.length;
+  const activeFilterCount = nat.length + svc.length;
 
   const handleTouchStart = (e: React.TouchEvent) => setTouchStart(e.touches[0].clientX);
   const handleTouchMove = (e: React.TouchEvent) => setTouchEnd(e.touches[0].clientX);
@@ -415,13 +496,12 @@ const RosterGrid: React.FC = () => {
   };
 
   const showTomorrowReleaseMsg =
-    activeTab === "tomorrow" &&
-    apiTomorrow != null &&
-    Array.isArray(apiTomorrow) &&
-    apiTomorrow.length === 0;
+    tab === "tomorrow" && apiTomorrow != null && Array.isArray(apiTomorrow) && apiTomorrow.length === 0;
+
+  const isLoading = providers === null || apiToday === null || apiTomorrow === null;
 
   return (
-    <section id="roster" className="min-h-screen bg-black relative overflow-hidden py-12">
+    <section className="min-h-screen bg-black relative overflow-hidden py-12">
       <div className="relative z-10 max-w-screen-xl mx-auto">
         {apiError && (
           <div className="mx-6 mb-4 p-3 border border-red-500/40 bg-red-900/20 text-red-300 text-sm">
@@ -432,97 +512,108 @@ const RosterGrid: React.FC = () => {
         {/* Tabs */}
         <div className="flex gap-4 mb-8 justify-center">
           <button
-            onClick={() => setActiveTab("today")}
-            className={`px-6 py-3 font-bold text-2xl border-2 transition-all ${
-              activeTab === "today" ? "border-red-500 text-red-300" : "border-gray-700 text-gray-300"
-            }`}
-            style={activeTab === "today" ? { boxShadow: "0 0 18px rgba(255,40,40,0.55)" } : undefined}
+            onClick={() => commitParams({ tab: "today", page: 0 })}
+            className={`px-6 py-3 font-bold text-2xl border-2 transition-all ${tab === "today" ? "border-red-500 text-red-300" : "border-gray-700 text-gray-300"
+              }`}
+            style={tab === "today" ? { boxShadow: "0 0 18px rgba(255,40,40,0.55)" } : undefined}
           >
-            TODAY
+            {t("roster.today")}
           </button>
 
           <button
-            onClick={() => setActiveTab("tomorrow")}
-            className={`px-6 py-3 font-bold text-2xl border-2 transition-all ${
-              activeTab === "tomorrow" ? "border-red-500 text-red-300" : "border-gray-700 text-gray-300"
-            }`}
-            style={activeTab === "tomorrow" ? { boxShadow: "0 0 18px rgba(255,40,40,0.55)" } : undefined}
+            onClick={() => commitParams({ tab: "tomorrow", page: 0 })}
+            className={`px-6 py-3 font-bold text-2xl border-2 transition-all ${tab === "tomorrow" ? "border-red-500 text-red-300" : "border-gray-700 text-gray-300"
+              }`}
+            style={tab === "tomorrow" ? { boxShadow: "0 0 18px rgba(255,40,40,0.55)" } : undefined}
           >
-            TOMORROW
+            {t("roster.tomorrow")}
           </button>
         </div>
 
         {showTomorrowReleaseMsg && (
           <div className="mx-6 mb-6 p-4 border border-red-500/30 bg-red-900/10 text-red-200 text-center">
-            Tomorrow roster releases by <span className="font-bold">7 PM</span>.
+            {t("roster.tomorrowReleaseTitle", { time: "7:00 PM" })}
+            <div className="text-gray-300 mt-1">{t("roster.tomorrowReleaseSubtitle")}</div>
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="mx-6 mb-8 p-6 border border-red-500/30 bg-red-900/10 text-center">
+            <div className="text-red-200 text-xl font-bold">{t("roster.loadingTitle")}</div>
+            <div className="text-gray-400 mt-2">{t("roster.loadingSubtitle")}</div>
           </div>
         )}
 
         {/* Filter button */}
         <div className="flex justify-between items-center ml-6 mb-6">
           <button
-            onClick={() => setShowFilters(!showFilters)}
+            onClick={() => commitParams({ filters: !showFilters })}
             className="flex items-center gap-2 px-4 py-2 bg-gray-900 border border-red-500/50 text-red-400 text-xl"
           >
             <Filter className="w-4 h-4" />
-            FILTERS
+            {t("filter.filters")}
             {activeFilterCount > 0 && (
               <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">{activeFilterCount}</span>
             )}
           </button>
 
           <div className="text-red-800 text-xl mr-6">
-            Page {safeCurrentBatch + 1} / {totalBatches}
+            Page {safePage + 1} / {totalBatches}
           </div>
         </div>
 
-        {/* Filters panel */}
         {showFilters && (
           <div className="mb-6 p-4 bg-gray-900 border border-red-500/50 mx-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-red-500 font-bold">FILTERS</h3>
+            <div className="flex justify-end items-center mb-4">
               <button onClick={clearFilters} className="text-lg text-gray-500 hover:text-white">
-                CLEAR ALL
+                {t("filter.clear")}
               </button>
             </div>
 
             <div className="mb-4">
-              <h4 className="text-red-500 font-bold mb-2">NATIONALITY</h4>
+              <h4 className="text-red-500 font-bold mb-2">{t("filter.nationality")}
+              </h4>
               <div className="flex flex-wrap gap-2">
-                {nationalities.map((nat) => (
+                {nationalities.map((n) => (
                   <button
-                    key={nat}
-                    onClick={() => toggleNationality(nat)}
-                    className={`px-3 py-1 border ${
-                      selectedNationalities.includes(nat)
-                        ? "bg-red-700 text-white border-red-500"
-                        : "bg-gray-800 text-gray-400 border-gray-700"
-                    }`}
+                    key={n}
+                    onClick={() => toggleNationality(n)}
+                    className={`px-3 py-1 border ${nat.includes(n) ? "bg-red-700 text-white border-red-500" : "bg-gray-800 text-gray-400 border-gray-700"
+                      }`}
                   >
-                    {nat}
+                    {n}
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <h4 className="text-red-500 font-bold mb-2">SERVICES</h4>
+              <h4 className="text-red-500 font-bold mb-2">{t("profile.availableServices")}</h4>
               <div className="flex flex-wrap gap-2">
-                {services.map((service) => (
+                {serviceFilterLabels.map((s) => (
                   <button
-                    key={service}
-                    onClick={() => toggleService(service)}
-                    className={`px-3 py-1 border ${
-                      selectedServices.includes(service)
-                        ? "bg-red-700 text-white border-red-500"
-                        : "bg-gray-800 text-gray-400 border-gray-700"
-                    }`}
+                    key={s}
+                    onClick={() => toggleService(s)}
+                    className={`px-3 py-1 border ${svc.includes(s) ? "bg-red-700 text-white border-red-500" : "bg-gray-800 text-gray-400 border-gray-700"
+                      }`}
                   >
-                    {service}
+                    {t(`services.${serviceKey(s)}`)}
                   </button>
                 ))}
               </div>
             </div>
+          </div>
+        )}
+
+        {!isLoading && filteredRoster.length === 0 && (
+          <div className="mx-6 mb-10 p-8 border border-red-500/20 bg-black/40 text-center">
+            <p className="text-gray-300 text-xl">{t("roster.emptyTitle")}</p>
+            <button
+              onClick={clearFilters}
+              className="mt-6 px-6 py-2 border border-red-500/40 text-red-300 hover:bg-red-500/10 transition-all"
+            >
+              {t("roster.clearFilters")}
+            </button>
           </div>
         )}
 
@@ -560,7 +651,7 @@ const RosterGrid: React.FC = () => {
                     className="absolute top-3 right-3 bg-red-500 text-white text-xs px-2 py-1 font-bold uppercase tracking-wider animate-pulse"
                     style={{ boxShadow: "0 0 12px rgba(255,0,255,0.7)" }}
                   >
-                    NEW
+                    {t("badges.new")}
                   </span>
                 )}
 
@@ -569,7 +660,16 @@ const RosterGrid: React.FC = () => {
                     className="absolute top-3 left-3 bg-emerald-400 text-black text-xs px-2 py-1 font-bold uppercase tracking-wider"
                     style={{ boxShadow: "0 0 12px rgba(16,185,129,0.65)" }}
                   >
-                    REAL
+                    {t("badges.realPhoto")}
+                  </span>
+                )}
+
+                {typeof model.hourly === "number" && (
+                  <span
+                    className="z-10 absolute bottom-3 right-3 bg-black/75 text-white text-sm px-2 py-1 font-bold tracking-wide border border-red-500/40"
+                    style={{ boxShadow: "0 0 12px rgba(255,40,40,0.35)" }}
+                  >
+                    ${model.hourly} <span className="text-xs text-gray-300">/hr</span>
                   </span>
                 )}
 

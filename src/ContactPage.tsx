@@ -1,13 +1,13 @@
 import React from 'react';
 import { ArrowLeft, Phone, MapPin, Briefcase } from 'lucide-react';
-import ProfileLayout from './components/ProfileLayout';
 import { useNavigate } from 'react-router-dom';
+import Layout from './components/Layout';
 
 const ContactPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <ProfileLayout>
+    <Layout>
       <section className="relative  bg-black overflow-hidden py-12">
 
         {/* Red grid glow */}
@@ -77,7 +77,7 @@ const ContactPage: React.FC = () => {
 
       </div>
     </section>
-    </ProfileLayout >
+    </Layout >
   );
 };
 

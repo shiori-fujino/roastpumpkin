@@ -1,0 +1,78 @@
+{
+  "menu": {
+    "rateService": "Rate & Service",
+    "roster": "Roster",
+    "contact": "Contact",
+    "homepage": "Homepage",
+    "news": "News"
+  },
+  "footer": {
+    "quickLinks": "QUICK LINKS",
+    "locationTitle": "LOCATION",
+    "hoursTitle": "HOURS",
+    "contactTitle": "CONTACT",
+    "locationLine1": "Near Sydenham Station",
+    "locationLine2": "Marrickville, NSW 2204",
+    "locationLine3": "Sydney, Australia",
+    "hoursLine1": "Open 7 Days",
+    "hoursLine2": "10:00 AM - 3:00 AM"
+  },
+  "roster": {
+    "today": "Roster Today",
+    "tomorrow": "Roster Tomorrow",
+    "loadingTitle": "Loading rosters…",
+    "loadingSubtitle": "Please wait a moment",
+    "tomorrowReleaseTitle": "Tomorrow roster releases by {{time}} (Sydney time)",
+    "tomorrowReleaseSubtitle": "Please check back later",
+    "emptyTitle": "No models available with the selected filters."
+  },
+  "filter": {
+    "filters": "Filters",
+    "nationality": "Nationality",
+    "clear": "Clear"
+  },
+  "common": {
+    "loading": "Loading…",
+    "back": "Back",
+    "noImage": "No image",
+    "bookNow": "Book Now"
+  },
+  "badges": {
+    "realPhoto": "Real Photo",
+    "new": "NEW"
+  },
+  "rates": {
+    "min30": "30 Min",
+    "min45": "45 Min",
+    "min60": "60 Min"
+  },
+  "profile": {
+    "from": "From",
+    "cup": "Cup",
+    "height": "Height",
+    "weight": "Weight",
+    "dressSize": "Dress Size",
+    "figure": "Figure",
+    "hair": "Hair",
+    "skin": "Skin",
+    "tattoos": "Tattoos",
+    "pubes": "Pubes",
+    "requirements": "Requirements",
+    "availableServices": "Available Services",
+    "about": "About"
+  },
+  "services": {
+    "bbbj": "BBBJ",
+    "cim": "CIM",
+    "dfk": "DFK",
+    "69": "69",
+    "rimming": "Rimming",
+    "filming": "Filming",
+    "cbj": "CBJ",
+    "massage": "Massage",
+    "gfe": "GFE",
+    "pse": "PSE",
+    "double": "Double",
+    "shower": "Shower Together"
+  }
+}
