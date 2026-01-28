@@ -157,18 +157,18 @@ function servicesFromProvider(p: ApiProvider): Service[] {
     list.some((item) => item.toLowerCase() === label.toLowerCase());
 
   return [
-    { name: "BBBJ", available: has("BBBJ") },
-    { name: "CIM", available: has("CIM") },
-    { name: "DFK", available: has("DFK") },
+    { name: "bbbj", available: has("BBBJ") },
+    { name: "cim", available: has("CIM") },
+    { name: "dfk", available: has("DFK") },
     { name: "69", available: has("69") },
-    { name: "Rimming", available: has("Rimming") },
-    { name: "Filming", available: has("Filming") },
-    { name: "CBJ", available: has("CBJ") },
-    { name: "Massage", available: has("Massage") },
-    { name: "GFE", available: has("GFE") },
-    { name: "PSE", available: has("PSE") },
-    { name: "Double", available: has("Double") },
-    { name: "Shower Together", available: has("shower together") || has("shower") },
+    { name: "rimming", available: has("Rimming") },
+    { name: "filming", available: has("Filming") },
+    { name: "cbj", available: has("CBJ") },
+    { name: "massage", available: has("Massage") },
+    { name: "gfe", available: has("GFE") },
+    { name: "pse", available: has("PSE") },
+    { name: "double", available: has("Double") },
+    { name: "shower", available: has("shower together") || has("shower") },
   ];
 }
 
@@ -186,7 +186,12 @@ function priceOrUndef(v: unknown): number | undefined {
 const ModelProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const natLabel = (raw: string) => {
+    const key = `nationalities.${raw}`;
+    return i18n.exists(key) ? t(key) : raw;
+  };
+
 
   // IMPORTANT: make route param :slug (App.tsx must match)
   const { slug } = useParams<{ slug: string }>();
@@ -196,6 +201,10 @@ const ModelProfilePage: React.FC = () => {
 
   const [model, setModel] = useState<ModelProfile | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+  
+
 
   /** ✅ NEW: store image meta (real flag) aligned with imageArray index */
   const [imageMeta, setImageMeta] = useState<ImgItem[]>([]);
@@ -321,6 +330,21 @@ const ModelProfilePage: React.FC = () => {
   const prevImage = () => {
     setCurrentImageIndex((prev) => (prev === 0 ? imageArray.length - 1 : prev - 1));
   };
+  const handleTouchStart = (e: React.TouchEvent) => setTouchStart(e.touches[0].clientX);
+  const handleTouchMove = (e: React.TouchEvent) => setTouchEnd(e.touches[0].clientX);
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+
+    // swipe left -> next
+    if (distance > 50) nextImage();
+
+    // swipe right -> prev
+    if (distance < -50) prevImage();
+
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
 
   /* ---------------- Render states ---------------- */
 
@@ -382,18 +406,18 @@ const ModelProfilePage: React.FC = () => {
 
         <div className="max-w-6xl mx-auto px-4 relative z-10">
           {/* n5 – Back to roster (smart) */}
-<button
-  onClick={() => {
-    if (window.history.state?.idx > 0) {
-      navigate(-1);
-      return;
-    }
-    navigate(
-      { pathname: "/", search: window.location.search, hash: "#roster" },
-      { state: { scrollTo: "roster" } }
-    );
-  }}
-  className="
+          <button
+            onClick={() => {
+              if (window.history.state?.idx > 0) {
+                navigate(-1);
+                return;
+              }
+              navigate(
+                { pathname: "/", search: window.location.search, hash: "#roster" },
+                { state: { scrollTo: "roster" } }
+              );
+            }}
+            className="
     inline-flex items-center gap-2
     mb-6 px-4 py-2
     border border-red-500/40
@@ -404,10 +428,10 @@ const ModelProfilePage: React.FC = () => {
     transition-all
     uppercase tracking-wider text-sm font-bold
   "
->
-  <ArrowLeft className="w-4 h-4" />
-  Back to Roster
-</button>
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Roster
+          </button>
 
 
 
@@ -416,17 +440,11 @@ const ModelProfilePage: React.FC = () => {
             {/* Left Column - Image Carousel */}
             <div className="space-y-6">
               <div
-                className="relative aspect-[3/4] overflow-hidden border-2 transition-all"
-                style={{
-                  borderColor: "rgba(255, 50, 50, 0.8)",
-                  boxShadow: `
-                    0 0 25px rgba(255, 40, 40, 0.6),
-                    0 0 60px rgba(255, 150, 50, 0.25),
-                    inset 0 0 20px rgba(120, 0, 0, 0.4)
-                  `,
-                  backgroundColor: "rgba(10, 0, 0, 0.5)",
-                }}
-              >
+                className="relative aspect-[3/4] overflow-hidden touch-pan-y"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}>
+
                 {imageArray.length > 0 ? (
                   <img
                     src={imageArray[currentImageIndex]}
@@ -481,8 +499,8 @@ const ModelProfilePage: React.FC = () => {
                         key={index}
                         onClick={() => setCurrentImageIndex(index)}
                         className={`h-2 transition-all ${index === currentImageIndex
-                            ? "bg-gradient-to-r from-red-500 to-red-900 w-8"
-                            : "bg-gray-700 w-2 hover:bg-gray-500"
+                          ? "bg-gradient-to-r from-red-500 to-red-900 w-8"
+                          : "bg-gray-700 w-2 hover:bg-gray-500"
                           }`}
                         style={{
                           boxShadow:
@@ -503,8 +521,8 @@ const ModelProfilePage: React.FC = () => {
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
                       className={`flex-shrink-0 w-20 h-28 overflow-hidden transition-all border-2 ${index === currentImageIndex
-                          ? "border-red-500 opacity-100"
-                          : "border-gray-800 opacity-60 hover:opacity-100 hover:border-red-500/50"
+                        ? "border-red-500 opacity-100"
+                        : "border-gray-800 opacity-60 hover:opacity-100 hover:border-red-500/50"
                         }`}
                       style={{
                         boxShadow:
@@ -584,7 +602,7 @@ const ModelProfilePage: React.FC = () => {
                   {model.nationality && (
                     <div className="border-b border-gray-800 pb-2">
                       <span className="text-gray-500 uppercase text-lg">{t("profile.from")}</span>
-                      <p className="text-white font-bold text-2xl">{model.nationality}</p>
+                      <p className="text-white font-bold text-2xl">{natLabel(model.nationality)}</p>
                     </div>
                   )}
                   {model.height && (
@@ -661,8 +679,8 @@ const ModelProfilePage: React.FC = () => {
                     <div
                       key={service.name}
                       className={`flex items-center gap-2 p-3 border transition-all ${service.available
-                          ? "bg-red-900/20 border-red-500/50 text-white-500"
-                          : "bg-gray-800/50 border-gray-700 text-gray-600"
+                        ? "bg-red-900/20 border-red-500/50 text-white-500"
+                        : "bg-gray-800/50 border-gray-700 text-gray-600"
                         }`}
                     >
                       {service.available ? (

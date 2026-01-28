@@ -221,7 +221,14 @@ function serviceKey(name: string) {
 /* ---------------- Component ---------------- */
 
 const RosterGrid: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const natLabel = useCallback(
+    (raw: string) => {
+      const key = `nationalities.${raw}`;
+      return i18n.exists(key) ? t(key) : raw;
+    },
+    [i18n, t]
+  );
   const [searchParams, setSearchParams] = useSearchParams();
   const BATCH_SIZE = useResponsiveBatchSize();
 
@@ -544,23 +551,25 @@ const RosterGrid: React.FC = () => {
           </div>
         )}
 
-        {/* Filter button */}
-        <div className="flex justify-between items-center ml-6 mb-6">
-          <button
-            onClick={() => commitParams({ filters: !showFilters })}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-900 border border-red-500/50 text-red-400 text-xl"
-          >
-            <Filter className="w-4 h-4" />
-            {t("filter.filters")}
-            {activeFilterCount > 0 && (
-              <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">{activeFilterCount}</span>
-            )}
-          </button>
 
-          <div className="text-red-800 text-xl mr-6">
-            Page {safePage + 1} / {totalBatches}
+        {!showTomorrowReleaseMsg && (
+          <div className="flex justify-between items-center ml-6 mb-6">
+            <button
+              onClick={() => commitParams({ filters: !showFilters })}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-900 border border-red-500/50 text-red-400 text-xl"
+            >
+              <Filter className="w-4 h-4" />
+              {t("filter.filters")}
+              {activeFilterCount > 0 && (
+                <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">{activeFilterCount}</span>
+              )}
+            </button>
+
+            <div className="text-red-800 text-xl mr-6">
+              Page {safePage + 1} / {totalBatches}
+            </div>
           </div>
-        </div>
+        )}
 
         {showFilters && (
           <div className="mb-6 p-4 bg-gray-900 border border-red-500/50 mx-6">
@@ -581,7 +590,8 @@ const RosterGrid: React.FC = () => {
                     className={`px-3 py-1 border ${nat.includes(n) ? "bg-red-700 text-white border-red-500" : "bg-gray-800 text-gray-400 border-gray-700"
                       }`}
                   >
-                    {n}
+
+                    {natLabel(n)}
                   </button>
                 ))}
               </div>
@@ -605,14 +615,14 @@ const RosterGrid: React.FC = () => {
           </div>
         )}
 
-        {!isLoading && filteredRoster.length === 0 && (
+        + {!isLoading && !showTomorrowReleaseMsg && filteredRoster.length === 0 && (
           <div className="mx-6 mb-10 p-8 border border-red-500/20 bg-black/40 text-center">
             <p className="text-gray-300 text-xl">{t("roster.emptyTitle")}</p>
             <button
               onClick={clearFilters}
               className="mt-6 px-6 py-2 border border-red-500/40 text-red-300 hover:bg-red-500/10 transition-all"
             >
-              {t("roster.clearFilters")}
+              {t("filter.clear")}
             </button>
           </div>
         )}
@@ -680,7 +690,8 @@ const RosterGrid: React.FC = () => {
                     {model.name}
                   </h3>
                   <p className="text-red-300 text-lg" style={{ textShadow: "0 0 10px rgba(0,0,0,0.9)" }}>
-                    {model.nationality}
+
+                    {natLabel(model.nationality)}
                   </p>
                   {model.workingTime && (
                     <p className="text-gray-200 text-sm mt-1" style={{ textShadow: "0 0 10px rgba(0,0,0,0.9)" }}>
