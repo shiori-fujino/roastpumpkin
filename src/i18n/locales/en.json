@@ -29,7 +29,10 @@
   "filter": {
     "filters": "Filters",
     "nationality": "Nationality",
-    "clear": "Clear"
+    "clear": "Clear",
+    "onNow": "On Now",
+    "startLater": "Starting Later",
+    "finished": "Finished"
   },
   "common": {
     "loading": "Loading…",

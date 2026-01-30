@@ -1,7 +1,7 @@
 // src/components/RosterGrid.tsx
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { Filter, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 // ✅ IMPORTANT: trailing slash to avoid redirect -> CORS
@@ -82,6 +82,8 @@ interface RosterModel {
   workingTime?: string;
   services?: Service[];
   isRealPhoto: boolean;
+  startTime?: string;
+  endTime?: string;
 
   // ✅ hourly teaser for roster card
   hourly?: number;
@@ -122,6 +124,42 @@ function formatTimeLabel(hhmmss: string) {
 function formatWorkingTime(start: string, end: string) {
   return `${formatTimeLabel(start)} - ${formatTimeLabel(end)}`;
 }
+
+type ShiftStatus = "now" | "later" | "finished";
+
+function parseHHMMSS(hhmmss: string): number {
+  // "15:00:00" -> minutes since midnight
+  const [hhStr, mmStr] = (hhmmss || "0:0").split(":");
+  const hh = Number(hhStr);
+  const mm = Number(mmStr);
+  if (!Number.isFinite(hh) || !Number.isFinite(mm)) return 0;
+  return hh * 60 + mm;
+}
+
+function getShiftStatus(startHHMMSS: string, endHHMMSS: string, now = new Date()): ShiftStatus {
+  const start = parseHHMMSS(startHHMMSS);
+  const end0 = parseHHMMSS(endHHMMSS); // original end (0..1439)
+  let end = end0;
+
+  // current local time in minutes
+  let t = now.getHours() * 60 + now.getMinutes();
+
+  const wraps = end0 <= start;
+
+  if (wraps) {
+    // shift ends next day
+    end = end0 + 1440;
+
+    // Only treat "now" as next-day minutes if we are after midnight part of the shift,
+    // i.e. time is before the original end (e.g. 01:00 < 03:00).
+    if (t < end0) t += 1440;
+  }
+
+  if (t >= start && t < end) return "now";
+  if (t < start) return "later";
+  return "finished";
+}
+
 
 function servicesFromProvider(p: ApiProvider): Service[] {
   const flags: Array<[string, boolean | undefined]> = [
@@ -233,6 +271,7 @@ const RosterGrid: React.FC = () => {
   const BATCH_SIZE = useResponsiveBatchSize();
 
   // ---- parse URL (single source of truth)
+  const time = (searchParams.get("time") as "now" | "later" | "finished") || "now";
   const tab = (searchParams.get("tab") as "today" | "tomorrow") || "today";
   const nat = (searchParams.get("nat") || "")
     .split(",")
@@ -253,9 +292,10 @@ const RosterGrid: React.FC = () => {
       svc?: string[];
       page?: number;
       filters?: boolean;
+      time?: "now" | "later" | "finished";
     }) => {
       const next = new URLSearchParams(searchParams);
-
+      if (patch.time) next.set("time", patch.time);
       if (patch.tab) next.set("tab", patch.tab);
 
       if (patch.nat) {
@@ -284,6 +324,10 @@ const RosterGrid: React.FC = () => {
   useEffect(() => {
     const next = new URLSearchParams(searchParams);
     let changed = false;
+    if (!next.get("time")) {
+      next.set("time", "now");
+      changed = true;
+    }
 
     if (!next.get("tab")) {
       next.set("tab", "today");
@@ -399,6 +443,8 @@ const RosterGrid: React.FC = () => {
         const thumb = pickThumbnailFromProvider(p) || images[0] || "";
 
         return {
+          startTime: entry.start_time,
+          endTime: entry.end_time,
           id: p.id,
           slug: p.slug,
           name: p.provider_name,
@@ -415,41 +461,81 @@ const RosterGrid: React.FC = () => {
       .filter(Boolean) as RosterModel[];
   }, [tab, apiToday, apiTomorrow, providers, providerById, providerByName, providerBySlug, providerByBaseSlug]);
 
-  const randomizedRoster = useMemo(() => {
-    if (!currentRoster.length) return [];
-    const newOnes = currentRoster.filter((m) => m.isNew);
-    const rest = currentRoster.filter((m) => !m.isNew);
-    return [...newOnes, ...shuffle(rest)];
-  }, [currentRoster]);
+  const shuffleKey = useMemo(() => {
+  // include tab + time + selected filters so each "view" has its own stable order
+  return ["n5m", tab, time, nat.join("|"), svc.join("|")].join("::");
+}, [tab, time, nat, svc]);
 
-  const nationalities = useMemo(
-    () => [...new Set(randomizedRoster.map((m) => m.nationality))].filter(Boolean).sort(),
-    [randomizedRoster]
-  );
+const randomizedRoster = useMemo(() => {
+  if (!currentRoster.length) return [];
 
-  const serviceFilterLabels = useMemo(() => {
-    return [
-      ...new Set(
-        randomizedRoster
-          .flatMap((m) => (m.services || []).filter((s) => s.available).map((s) => s.name))
-          .filter(Boolean)
-      ),
-    ].sort();
-  }, [randomizedRoster]);
+  const cacheKey = `roster-shuffle:${shuffleKey}`;
+  const cached = sessionStorage.getItem(cacheKey);
 
-  const modelHasAllSelectedServices = (model: RosterModel) => {
-    if (svc.length === 0) return true;
-    const available = (model.services || []).filter((s) => s.available).map((s) => s.name);
-    return svc.every((s) => available.includes(s));
-  };
+  if (cached) {
+    try {
+      const ids = JSON.parse(cached) as number[];
+      const map = new Map(currentRoster.map((m) => [m.id, m]));
+      const ordered = ids.map((id) => map.get(id)).filter(Boolean) as RosterModel[];
 
-  const filteredRoster = useMemo(() => {
-    return randomizedRoster.filter((model) => {
-      if (nat.length > 0 && !nat.includes(model.nationality)) return false;
-      if (!modelHasAllSelectedServices(model)) return false;
-      return true;
-    });
-  }, [randomizedRoster, nat, svc]);
+      // If API roster changed, append missing ones at the end
+      if (ordered.length !== currentRoster.length) {
+        const seen = new Set(ordered.map((m) => m.id));
+        const missing = currentRoster.filter((m) => !seen.has(m.id));
+        return [...ordered, ...missing];
+      }
+
+      return ordered;
+    } catch {
+      // fall through to reshuffle
+    }
+  }
+
+  const newOnes = currentRoster.filter((m) => m.isNew);
+  const rest = currentRoster.filter((m) => !m.isNew);
+  const shuffled = [...newOnes, ...shuffle(rest)];
+
+  sessionStorage.setItem(cacheKey, JSON.stringify(shuffled.map((m) => m.id)));
+  return shuffled;
+}, [currentRoster, shuffleKey]);
+
+const timeFilteredRoster = useMemo(() => {
+  return randomizedRoster.filter((m) => {
+    if (!m.startTime || !m.endTime) return time === "now";
+    return getShiftStatus(m.startTime, m.endTime) === time;
+  });
+}, [randomizedRoster, time]);
+
+const nationalities = useMemo(
+  () => [...new Set(timeFilteredRoster.map((m) => m.nationality))].filter(Boolean).sort(),
+  [timeFilteredRoster]
+);
+
+const serviceFilterLabels = useMemo(() => {
+  return [
+    ...new Set(
+      timeFilteredRoster
+        .flatMap((m) => (m.services || []).filter((s) => s.available).map((s) => s.name))
+        .filter(Boolean)
+    ),
+  ].sort();
+}, [timeFilteredRoster]);
+
+const modelHasAllSelectedServices = (model: RosterModel) => {
+  if (svc.length === 0) return true;
+  const available = (model.services || []).filter((s) => s.available).map((s) => s.name);
+  return svc.every((s) => available.includes(s));
+};
+
+const filteredRoster = useMemo(() => {
+  return timeFilteredRoster.filter((model) => {
+    if (nat.length > 0 && !nat.includes(model.nationality)) return false;
+    if (!modelHasAllSelectedServices(model)) return false;
+    return true;
+  });
+}, [timeFilteredRoster, nat, svc]);
+
+
 
   const totalBatches = Math.max(1, Math.ceil(filteredRoster.length / BATCH_SIZE));
   const safePage = useMemo(() => ((page % totalBatches) + totalBatches) % totalBatches, [page, totalBatches]);
@@ -553,22 +639,37 @@ const RosterGrid: React.FC = () => {
 
 
         {!showTomorrowReleaseMsg && (
-          <div className="flex justify-between items-center ml-6 mb-6">
-            <button
-              onClick={() => commitParams({ filters: !showFilters })}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-900 border border-red-500/50 text-red-400 text-xl"
-            >
-              <Filter className="w-4 h-4" />
-              {t("filter.filters")}
-              {activeFilterCount > 0 && (
-                <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">{activeFilterCount}</span>
-              )}
-            </button>
+          <div className="flex items-center gap-3">
+  <button
+    onClick={() => commitParams({ filters: !showFilters })}
+    className="flex items-center gap-2 px-4 py-2 bg-gray-900 border border-red-500/50 text-red-400 text-xl"
+  >
+    <Filter className="w-4 h-4" />
+    {t("filter.filters")}
+    {activeFilterCount > 0 && (
+      <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">{activeFilterCount}</span>
+    )}
+  </button>
 
-            <div className="text-red-800 text-xl mr-6">
-              Page {safePage + 1} / {totalBatches}
-            </div>
-          </div>
+  <button
+    onClick={() => {
+      const order: Array<"now" | "later" | "finished"> = ["now", "later", "finished"];
+      const idx = order.indexOf(time);
+      const next = order[(idx + 1) % order.length];
+      commitParams({ time: next, page: 0 });
+    }}
+    className="flex items-center gap-2 px-4 py-2 bg-gray-900 border border-red-500/30 text-gray-200 text-xl hover:bg-red-500/10"
+    title="Time filter"
+  >
+    <Clock className="w-4 h-4 text-red-400" />
+    {time === "now" 
+    ? t("filter.onNow")
+    : time === "later" 
+    ? t("filter.startLater")
+    : t("filter.finished")}
+  </button>
+</div>
+
         )}
 
         {showFilters && (
@@ -615,7 +716,7 @@ const RosterGrid: React.FC = () => {
           </div>
         )}
 
-        + {!isLoading && !showTomorrowReleaseMsg && filteredRoster.length === 0 && (
+        {!isLoading && !showTomorrowReleaseMsg && filteredRoster.length === 0 && (
           <div className="mx-6 mb-10 p-8 border border-red-500/20 bg-black/40 text-center">
             <p className="text-gray-300 text-xl">{t("roster.emptyTitle")}</p>
             <button
