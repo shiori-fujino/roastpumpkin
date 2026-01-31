@@ -24,7 +24,7 @@
     "loadingSubtitle": "Please wait a moment",
     "tomorrowReleaseTitle": "Tomorrow roster releases by {{time}} (Sydney time)",
     "tomorrowReleaseSubtitle": "Please check back later",
-    "emptyTitle": "No models available with the selected filters."
+    "emptyTitle": "No girls match your current time or filters. Try switching the time filter or clearing filters."
   },
   "filter": {
     "filters": "Filters",

@@ -24,7 +24,7 @@
         "loadingSubtitle": "请稍等",
         "tomorrowReleaseTitle": "明日排班将于{{time}}发布（悉尼时间）",
         "tomorrowReleaseSubtitle": "请稍后再来查看",
-        "emptyTitle": "没有符合筛选条件的女生"
+        "emptyTitle": "当前时间或筛选条件下暂无女生，请尝试切换时间或清除筛选。"
     },
     "filter": {
         "filters": "筛选",

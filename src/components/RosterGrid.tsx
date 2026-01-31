@@ -125,41 +125,78 @@ function formatWorkingTime(start: string, end: string) {
   return `${formatTimeLabel(start)} - ${formatTimeLabel(end)}`;
 }
 
+/* ---------------- Time helpers (SHOP DAY anchored) ---------------- */
+
 type ShiftStatus = "now" | "later" | "finished";
 
-function parseHHMMSS(hhmmss: string): number {
-  // "15:00:00" -> minutes since midnight
-  const [hhStr, mmStr] = (hhmmss || "0:0").split(":");
+function parseHHMMSSParts(hhmmss: string): { hh: number; mm: number; ss: number } {
+  const [hhStr, mmStr, ssStr] = (hhmmss || "0:0:0").split(":");
   const hh = Number(hhStr);
   const mm = Number(mmStr);
-  if (!Number.isFinite(hh) || !Number.isFinite(mm)) return 0;
-  return hh * 60 + mm;
+  const ss = Number(ssStr ?? "0");
+  return {
+    hh: Number.isFinite(hh) ? hh : 0,
+    mm: Number.isFinite(mm) ? mm : 0,
+    ss: Number.isFinite(ss) ? ss : 0,
+  };
 }
 
-function getShiftStatus(startHHMMSS: string, endHHMMSS: string, now = new Date()): ShiftStatus {
-  const start = parseHHMMSS(startHHMMSS);
-  const end0 = parseHHMMSS(endHHMMSS); // original end (0..1439)
-  let end = end0;
+function startOfDay(d: Date) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
 
-  // current local time in minutes
-  let t = now.getHours() * 60 + now.getMinutes();
+function addDays(d: Date, days: number) {
+  const x = new Date(d);
+  x.setDate(x.getDate() + days);
+  return x;
+}
 
-  const wraps = end0 <= start;
+function makeDateOnDay(day: Date, hhmmss: string) {
+  const { hh, mm, ss } = parseHHMMSSParts(hhmmss);
+  const x = new Date(day);
+  x.setHours(hh, mm, ss, 0);
+  return x;
+}
 
-  if (wraps) {
-    // shift ends next day
-    end = end0 + 1440;
+/**
+ * Date-anchored shift status:
+ * - rosterDay is the SHOP DAY anchor (today tab => shopToday, tomorrow tab => shopToday+1)
+ * - if end <= start => end is next day (overnight)
+ * - end "00:00:00" means 24:00 of that day, not start-of-day
+ */
+function getShiftStatusOnDay(
+  startHHMMSS: string,
+  endHHMMSS: string,
+  rosterDay: Date,
+  now: Date = new Date()
+): ShiftStatus {
+  const day0 = startOfDay(rosterDay);
+  const startAt = makeDateOnDay(day0, startHHMMSS);
 
-    // Only treat "now" as next-day minutes if we are after midnight part of the shift,
-    // i.e. time is before the original end (e.g. 01:00 < 03:00).
-    if (t < end0) t += 1440;
+  const endParts = parseHHMMSSParts(endHHMMSS);
+  const isMidnight = endParts.hh === 0 && endParts.mm === 0 && endParts.ss === 0;
+
+  let endAt = makeDateOnDay(day0, endHHMMSS);
+
+  // interpret end=00:00 as 24:00 if start isn't also midnight
+  if (
+    isMidnight &&
+    (startAt.getHours() !== 0 || startAt.getMinutes() !== 0 || startAt.getSeconds() !== 0)
+  ) {
+    endAt = addDays(day0, 1); // 24:00
   }
 
-  if (t >= start && t < end) return "now";
-  if (t < start) return "later";
+  // overnight
+  if (endAt.getTime() <= startAt.getTime()) {
+    endAt = addDays(endAt, 1);
+  }
+
+  if (now.getTime() >= startAt.getTime() && now.getTime() < endAt.getTime()) return "now";
+  if (now.getTime() < startAt.getTime()) return "later";
   return "finished";
 }
-
 
 function servicesFromProvider(p: ApiProvider): Service[] {
   const flags: Array<[string, boolean | undefined]> = [
@@ -267,6 +304,7 @@ const RosterGrid: React.FC = () => {
     },
     [i18n, t]
   );
+
   const [searchParams, setSearchParams] = useSearchParams();
   const BATCH_SIZE = useResponsiveBatchSize();
 
@@ -320,15 +358,15 @@ const RosterGrid: React.FC = () => {
     [searchParams, setSearchParams]
   );
 
-  // ✅ ensure defaults exist (tab/page)
+  // ✅ ensure defaults exist (time/tab/page)
   useEffect(() => {
     const next = new URLSearchParams(searchParams);
     let changed = false;
+
     if (!next.get("time")) {
       next.set("time", "now");
       changed = true;
     }
-
     if (!next.get("tab")) {
       next.set("tab", "today");
       changed = true;
@@ -461,81 +499,94 @@ const RosterGrid: React.FC = () => {
       .filter(Boolean) as RosterModel[];
   }, [tab, apiToday, apiTomorrow, providers, providerById, providerByName, providerBySlug, providerByBaseSlug]);
 
+  // ✅ shop "business day" starts at 10:00 and runs until 03:00 next day
+  const SHOP_DAY_START_HOUR = 10;
+
+  const rosterDay = useMemo(() => {
+    const now = new Date();
+    const calendarToday = startOfDay(now);
+
+    // 00:00–09:59 belongs to yesterday's shop day
+    const shopToday = now.getHours() < SHOP_DAY_START_HOUR ? addDays(calendarToday, -1) : calendarToday;
+
+    // today tab => shopToday, tomorrow tab => shopToday + 1
+    return tab === "tomorrow" ? addDays(shopToday, 1) : shopToday;
+  }, [tab]);
+
   const shuffleKey = useMemo(() => {
-  // include tab + time + selected filters so each "view" has its own stable order
-  return ["n5m", tab, time, nat.join("|"), svc.join("|")].join("::");
-}, [tab, time, nat, svc]);
+    // include tab + time + selected filters so each "view" has its own stable order
+    return ["n5m", tab, time, nat.join("|"), svc.join("|")].join("::");
+  }, [tab, time, nat, svc]);
 
-const randomizedRoster = useMemo(() => {
-  if (!currentRoster.length) return [];
+  const randomizedRoster = useMemo(() => {
+    if (!currentRoster.length) return [];
 
-  const cacheKey = `roster-shuffle:${shuffleKey}`;
-  const cached = sessionStorage.getItem(cacheKey);
+    const cacheKey = `roster-shuffle:${shuffleKey}`;
+    const cached = sessionStorage.getItem(cacheKey);
 
-  if (cached) {
-    try {
-      const ids = JSON.parse(cached) as number[];
-      const map = new Map(currentRoster.map((m) => [m.id, m]));
-      const ordered = ids.map((id) => map.get(id)).filter(Boolean) as RosterModel[];
+    if (cached) {
+      try {
+        const ids = JSON.parse(cached) as number[];
+        const map = new Map(currentRoster.map((m) => [m.id, m]));
+        const ordered = ids.map((id) => map.get(id)).filter(Boolean) as RosterModel[];
 
-      // If API roster changed, append missing ones at the end
-      if (ordered.length !== currentRoster.length) {
-        const seen = new Set(ordered.map((m) => m.id));
-        const missing = currentRoster.filter((m) => !seen.has(m.id));
-        return [...ordered, ...missing];
+        // If API roster changed, append missing ones at the end
+        if (ordered.length !== currentRoster.length) {
+          const seen = new Set(ordered.map((m) => m.id));
+          const missing = currentRoster.filter((m) => !seen.has(m.id));
+          return [...ordered, ...missing];
+        }
+
+        return ordered;
+      } catch {
+        // fall through to reshuffle
       }
-
-      return ordered;
-    } catch {
-      // fall through to reshuffle
     }
-  }
 
-  const newOnes = currentRoster.filter((m) => m.isNew);
-  const rest = currentRoster.filter((m) => !m.isNew);
-  const shuffled = [...newOnes, ...shuffle(rest)];
+    const newOnes = currentRoster.filter((m) => m.isNew);
+    const rest = currentRoster.filter((m) => !m.isNew);
+    const shuffled = [...newOnes, ...shuffle(rest)];
 
-  sessionStorage.setItem(cacheKey, JSON.stringify(shuffled.map((m) => m.id)));
-  return shuffled;
-}, [currentRoster, shuffleKey]);
+    sessionStorage.setItem(cacheKey, JSON.stringify(shuffled.map((m) => m.id)));
+    return shuffled;
+  }, [currentRoster, shuffleKey]);
 
-const timeFilteredRoster = useMemo(() => {
-  return randomizedRoster.filter((m) => {
-    if (!m.startTime || !m.endTime) return time === "now";
-    return getShiftStatus(m.startTime, m.endTime) === time;
-  });
-}, [randomizedRoster, time]);
+  // ✅ TIME filter using SHOP DAY anchor (fixes 12:41am “everything later” bug)
+  const timeFilteredRoster = useMemo(() => {
+    return randomizedRoster.filter((m) => {
+      if (!m.startTime || !m.endTime) return true; // don't hide all if missing
+      return getShiftStatusOnDay(m.startTime, m.endTime, rosterDay) === time;
+    });
+  }, [randomizedRoster, time, rosterDay]);
 
-const nationalities = useMemo(
-  () => [...new Set(timeFilteredRoster.map((m) => m.nationality))].filter(Boolean).sort(),
-  [timeFilteredRoster]
-);
+  const nationalities = useMemo(
+    () => [...new Set(timeFilteredRoster.map((m) => m.nationality))].filter(Boolean).sort(),
+    [timeFilteredRoster]
+  );
 
-const serviceFilterLabels = useMemo(() => {
-  return [
-    ...new Set(
-      timeFilteredRoster
-        .flatMap((m) => (m.services || []).filter((s) => s.available).map((s) => s.name))
-        .filter(Boolean)
-    ),
-  ].sort();
-}, [timeFilteredRoster]);
+  const serviceFilterLabels = useMemo(() => {
+    return [
+      ...new Set(
+        timeFilteredRoster
+          .flatMap((m) => (m.services || []).filter((s) => s.available).map((s) => s.name))
+          .filter(Boolean)
+      ),
+    ].sort();
+  }, [timeFilteredRoster]);
 
-const modelHasAllSelectedServices = (model: RosterModel) => {
-  if (svc.length === 0) return true;
-  const available = (model.services || []).filter((s) => s.available).map((s) => s.name);
-  return svc.every((s) => available.includes(s));
-};
+  const modelHasAllSelectedServices = (model: RosterModel) => {
+    if (svc.length === 0) return true;
+    const available = (model.services || []).filter((s) => s.available).map((s) => s.name);
+    return svc.every((s) => available.includes(s));
+  };
 
-const filteredRoster = useMemo(() => {
-  return timeFilteredRoster.filter((model) => {
-    if (nat.length > 0 && !nat.includes(model.nationality)) return false;
-    if (!modelHasAllSelectedServices(model)) return false;
-    return true;
-  });
-}, [timeFilteredRoster, nat, svc]);
-
-
+  const filteredRoster = useMemo(() => {
+    return timeFilteredRoster.filter((model) => {
+      if (nat.length > 0 && !nat.includes(model.nationality)) return false;
+      if (!modelHasAllSelectedServices(model)) return false;
+      return true;
+    });
+  }, [timeFilteredRoster, nat, svc]);
 
   const totalBatches = Math.max(1, Math.ceil(filteredRoster.length / BATCH_SIZE));
   const safePage = useMemo(() => ((page % totalBatches) + totalBatches) % totalBatches, [page, totalBatches]);
@@ -593,6 +644,12 @@ const filteredRoster = useMemo(() => {
 
   const isLoading = providers === null || apiToday === null || apiTomorrow === null;
 
+  // ✅ better empty text when time filter is involved
+  const emptyText = t("roster.emptyTitleTime", {
+    defaultValue:
+      "No girls match your current time or filters. Try switching the time filter or clearing filters.",
+  });
+
   return (
     <section className="min-h-screen bg-black relative overflow-hidden py-12">
       <div className="relative z-10 max-w-screen-xl mx-auto">
@@ -606,8 +663,9 @@ const filteredRoster = useMemo(() => {
         <div className="flex gap-4 mb-8 justify-center">
           <button
             onClick={() => commitParams({ tab: "today", page: 0 })}
-            className={`px-6 py-3 font-bold text-2xl border-2 transition-all ${tab === "today" ? "border-red-500 text-red-300" : "border-gray-700 text-gray-300"
-              }`}
+            className={`px-6 py-3 font-bold text-2xl border-2 transition-all ${
+              tab === "today" ? "border-red-500 text-red-300" : "border-gray-700 text-gray-300"
+            }`}
             style={tab === "today" ? { boxShadow: "0 0 18px rgba(255,40,40,0.55)" } : undefined}
           >
             {t("roster.today")}
@@ -615,8 +673,9 @@ const filteredRoster = useMemo(() => {
 
           <button
             onClick={() => commitParams({ tab: "tomorrow", page: 0 })}
-            className={`px-6 py-3 font-bold text-2xl border-2 transition-all ${tab === "tomorrow" ? "border-red-500 text-red-300" : "border-gray-700 text-gray-300"
-              }`}
+            className={`px-6 py-3 font-bold text-2xl border-2 transition-all ${
+              tab === "tomorrow" ? "border-red-500 text-red-300" : "border-gray-700 text-gray-300"
+            }`}
             style={tab === "tomorrow" ? { boxShadow: "0 0 18px rgba(255,40,40,0.55)" } : undefined}
           >
             {t("roster.tomorrow")}
@@ -637,39 +696,35 @@ const filteredRoster = useMemo(() => {
           </div>
         )}
 
-
         {!showTomorrowReleaseMsg && (
-          <div className="flex items-center gap-3">
-  <button
-    onClick={() => commitParams({ filters: !showFilters })}
-    className="flex items-center gap-2 px-4 py-2 bg-gray-900 border border-red-500/50 text-red-400 text-xl"
-  >
-    <Filter className="w-4 h-4" />
-    {t("filter.filters")}
-    {activeFilterCount > 0 && (
-      <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">{activeFilterCount}</span>
-    )}
-  </button>
+          <div className="flex items-center gap-3 mx-6 mb-6">
+            <button
+              onClick={() => commitParams({ filters: !showFilters })}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-900 border border-red-500/50 text-red-400 text-xl"
+            >
+              <Filter className="w-4 h-4" />
+              {t("filter.filters")}
+              {activeFilterCount > 0 && (
+                <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
 
-  <button
-    onClick={() => {
-      const order: Array<"now" | "later" | "finished"> = ["now", "later", "finished"];
-      const idx = order.indexOf(time);
-      const next = order[(idx + 1) % order.length];
-      commitParams({ time: next, page: 0 });
-    }}
-    className="flex items-center gap-2 px-4 py-2 bg-gray-900 border border-red-500/30 text-gray-200 text-xl hover:bg-red-500/10"
-    title="Time filter"
-  >
-    <Clock className="w-4 h-4 text-red-400" />
-    {time === "now" 
-    ? t("filter.onNow")
-    : time === "later" 
-    ? t("filter.startLater")
-    : t("filter.finished")}
-  </button>
-</div>
-
+            <button
+              onClick={() => {
+                const order: Array<"now" | "later" | "finished"> = ["now", "later", "finished"];
+                const idx = order.indexOf(time);
+                const next = order[(idx + 1) % order.length];
+                commitParams({ time: next, page: 0 });
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-900 border border-red-500/30 text-gray-200 text-xl hover:bg-red-500/10"
+              title="Time filter"
+            >
+              <Clock className="w-4 h-4 text-red-400" />
+              {time === "now" ? t("filter.onNow") : time === "later" ? t("filter.startLater") : t("filter.finished")}
+            </button>
+          </div>
         )}
 
         {showFilters && (
@@ -681,17 +736,16 @@ const filteredRoster = useMemo(() => {
             </div>
 
             <div className="mb-4">
-              <h4 className="text-red-500 font-bold mb-2">{t("filter.nationality")}
-              </h4>
+              <h4 className="text-red-500 font-bold mb-2">{t("filter.nationality")}</h4>
               <div className="flex flex-wrap gap-2">
                 {nationalities.map((n) => (
                   <button
                     key={n}
                     onClick={() => toggleNationality(n)}
-                    className={`px-3 py-1 border ${nat.includes(n) ? "bg-red-700 text-white border-red-500" : "bg-gray-800 text-gray-400 border-gray-700"
-                      }`}
+                    className={`px-3 py-1 border ${
+                      nat.includes(n) ? "bg-red-700 text-white border-red-500" : "bg-gray-800 text-gray-400 border-gray-700"
+                    }`}
                   >
-
                     {natLabel(n)}
                   </button>
                 ))}
@@ -705,8 +759,9 @@ const filteredRoster = useMemo(() => {
                   <button
                     key={s}
                     onClick={() => toggleService(s)}
-                    className={`px-3 py-1 border ${svc.includes(s) ? "bg-red-700 text-white border-red-500" : "bg-gray-800 text-gray-400 border-gray-700"
-                      }`}
+                    className={`px-3 py-1 border ${
+                      svc.includes(s) ? "bg-red-700 text-white border-red-500" : "bg-gray-800 text-gray-400 border-gray-700"
+                    }`}
                   >
                     {t(`services.${serviceKey(s)}`)}
                   </button>
@@ -718,7 +773,7 @@ const filteredRoster = useMemo(() => {
 
         {!isLoading && !showTomorrowReleaseMsg && filteredRoster.length === 0 && (
           <div className="mx-6 mb-10 p-8 border border-red-500/20 bg-black/40 text-center">
-            <p className="text-gray-300 text-xl">{t("roster.emptyTitle")}</p>
+            <p className="text-gray-300 text-xl">{emptyText}</p>
             <button
               onClick={clearFilters}
               className="mt-6 px-6 py-2 border border-red-500/40 text-red-300 hover:bg-red-500/10 transition-all"
@@ -791,7 +846,6 @@ const filteredRoster = useMemo(() => {
                     {model.name}
                   </h3>
                   <p className="text-red-300 text-lg" style={{ textShadow: "0 0 10px rgba(0,0,0,0.9)" }}>
-
                     {natLabel(model.nationality)}
                   </p>
                   {model.workingTime && (
