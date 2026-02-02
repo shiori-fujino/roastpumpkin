@@ -81,7 +81,6 @@ interface RosterModel {
   isNew: boolean;
   workingTime?: string;
   services?: Service[];
-  isRealPhoto: boolean;
   startTime?: string;
   endTime?: string;
 
@@ -262,9 +261,6 @@ function pickThumbnailFromProvider(p: ApiProvider): string {
   return best || "";
 }
 
-function hasAnyRealPhoto(p: ApiProvider): boolean {
-  return (p.images || []).some((img) => img.real === true);
-}
 
 function shuffle<T>(array: T[]) {
   const arr = [...array];
@@ -490,7 +486,6 @@ const RosterGrid: React.FC = () => {
           image: thumb,
           images,
           isNew: p.is_new === true,
-          isRealPhoto: hasAnyRealPhoto(p),
           workingTime: formatWorkingTime(entry.start_time, entry.end_time),
           services: servicesFromProvider(p),
           hourly: priceOrUndef(p.total_60),
@@ -812,23 +807,9 @@ const RosterGrid: React.FC = () => {
                   className="w-full h-full object-cover object-[center_35%] transition-transform duration-500 group-hover:scale-110"
                 />
 
-                {model.isNew && (
-                  <span
-                    className="absolute top-3 right-3 bg-red-500 text-white text-xs px-2 py-1 font-bold uppercase tracking-wider animate-pulse"
-                    style={{ boxShadow: "0 0 12px rgba(255,0,255,0.7)" }}
-                  >
-                    {t("badges.new")}
-                  </span>
-                )}
+                
 
-                {model.isRealPhoto && (
-                  <span
-                    className="absolute top-3 left-3 bg-emerald-400 text-black text-xs px-2 py-1 font-bold uppercase tracking-wider"
-                    style={{ boxShadow: "0 0 12px rgba(16,185,129,0.65)" }}
-                  >
-                    {t("badges.realPhoto")}
-                  </span>
-                )}
+                
 
                 {typeof model.hourly === "number" && (
                   <span
@@ -842,18 +823,35 @@ const RosterGrid: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
 
                 <div className="absolute inset-0 flex flex-col justify-end p-4 pointer-events-none">
-                  <h3 className="text-white font-bold text-lg" style={{ textShadow: "0 0 10px rgba(0,0,0,0.9)" }}>
-                    {model.name}
-                  </h3>
-                  <p className="text-red-300 text-lg" style={{ textShadow: "0 0 10px rgba(0,0,0,0.9)" }}>
-                    {natLabel(model.nationality)}
-                  </p>
-                  {model.workingTime && (
-                    <p className="text-gray-200 text-sm mt-1" style={{ textShadow: "0 0 10px rgba(0,0,0,0.9)" }}>
-                      {model.workingTime}
-                    </p>
-                  )}
-                </div>
+  <div className="flex items-center gap-2">
+    <h3
+      className="text-white font-bold text-lg"
+      style={{ textShadow: "0 0 10px rgba(0,0,0,0.9)" }}
+    >
+      {model.name}
+    </h3>
+
+    {model.isNew && (
+      <span
+        className="bg-red-900 text-white text-[10px] px-1.5 py-0.5 font-bold uppercase tracking-wider animate-pulse relative right-[-2px]"
+style={{ boxShadow: "0 0 10px rgba(255, 120, 80, 0.35)" }}
+      >
+        {t("badges.new")}
+      </span>
+    )}
+  </div>
+
+  <p className="text-red-300 text-lg">
+    {natLabel(model.nationality)}
+  </p>
+
+  {model.workingTime && (
+    <p className="text-gray-200 text-sm mt-1">
+      {model.workingTime}
+    </p>
+  )}
+</div>
+
               </Link>
             ))}
           </div>
