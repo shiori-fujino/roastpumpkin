@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { Phone, MapPin, Clock, Link2 } from "lucide-react";
-import { Link, useNavigate, useLocation, useNavigationType } from "react-router-dom";
+import { Link, useLocation, useNavigationType } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 interface LayoutProps {
@@ -8,7 +8,6 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const location = useLocation();
   const navType = useNavigationType(); // POP / PUSH / REPLACE
@@ -82,12 +81,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </Link>
                   </li>
                   <li>
-                    <button
-                     onClick={() => navigate({ pathname: "/", hash: "#roster" })}
-
+                    <Link
+                      to="/#roster"
+                      className="text-gray-400 hover:text-red-500 transition-colors"
                     >
                       {t("menu.roster")}
-                    </button>
+                    </Link>
+
                   </li>
                   <li>
                     <Link to="/news" className="text-gray-400 hover:text-red-500 transition-colors">

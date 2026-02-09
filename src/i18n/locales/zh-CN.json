@@ -45,11 +45,13 @@
         "new": "新女孩"
     },
     "rates": {
+        "title": "价格",
         "min30": "30分钟",
         "min45": "45分钟",
         "min60": "60分钟"
     },
     "profile": {
+        "details": "细节",
         "from": "国籍",
         "cup": "罩杯",
         "height": "身高",

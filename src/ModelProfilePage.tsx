@@ -1,62 +1,33 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Phone, Check, X, ArrowLeft } from "lucide-react";
+// src/pages/ModelProfilePage.tsx
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
+
 import Layout from "./components/Layout";
 
+import ProfileGallery from "./components/profile/ProfileGallery";
+import ProfileHeader from "./components/profile/ProfileHeader";
+import AvailableServices from "./components/profile/AvailableServices";
+import ProfileBio from "./components/profile/ProfileBio";
+import ProfileDetailsGrid from "./components/profile/ProfileDetailGrid";
+import MobileCTA from "./components/profile/MobileCTA";
+
 const PROVIDERS_URL = "/api/providers/";
+const ROSTER_TODAY_URL = "/api/roster/today/";
 
-/* ---------------- Types ---------------- */
-
-interface Service {
-  name: string;
-  available: boolean;
-}
-
-interface ModelProfile {
-  id: number;
-  name: string;
-  nationality: string;
-  age?: number;
-  height?: number;
-  weight?: number;
-  bust?: string;
-  dressSize?: number;
-  figure?: string;
-  hair?: string;
-  skin?: string;
-  tattoos?: string;
-  pubes?: string;
-  requirements?: string;
-  image: string;
-  images?: string[];
-  profileLink: string;
-  isNew: boolean;
-
-  // legacy flags (kept for compatibility)
-  filming: boolean;
-  cim: boolean;
-  dfk: boolean;
-
-  workingTime?: string;
-  schedule?: string;
-  services?: Service[];
-  bio?: string;
-
-  // ✅ NEW: rates from provider API
-  rates?: {
-    min30?: number;
-    min45?: number;
-    min60?: number;
-  };
-}
+type ApiRosterEntry = {
+  provider_id: number;
+  provider_name: string;
+  start_time: string;
+  end_time: string;
+};
 
 type ApiProviderImage = {
   image: string;
   file_type?: string;
   profile?: boolean;
   priority?: number;
-  real?: boolean;
 };
 
 type ApiProvider = {
@@ -81,7 +52,6 @@ type ApiProvider = {
 
   is_new?: boolean;
 
-  // service flags
   service_bbbj?: boolean;
   service_cim?: boolean;
   service_dfk?: boolean;
@@ -95,10 +65,43 @@ type ApiProvider = {
   service_double?: boolean;
   service_shower?: boolean;
 
-  // ✅ NEW: pricing fields (can be number OR string depending on backend)
   total_30?: number | string | null;
   total_45?: number | string | null;
   total_60?: number | string | null;
+};
+
+export type Service = { name: string; available: boolean };
+
+type ModelProfile = {
+  id: number;
+  name: string;
+  slug: string;
+  nationality: string;
+
+  height?: number;
+  weight?: number;
+  bust?: string;
+  dressSize?: number;
+  figure?: string;
+  hair?: string;
+  skin?: string;
+  tattoos?: string;
+  pubes?: string;
+
+  bio?: string;
+
+  images: string[];
+  isNew: boolean;
+
+  workingTime?: string;
+
+  services: Service[];
+
+  rates?: {
+    min30?: number;
+    min45?: number;
+    min60?: number;
+  };
 };
 
 /* ---------------- Helpers ---------------- */
@@ -111,23 +114,17 @@ function bool(v: any) {
   return v === true;
 }
 
-/** ✅ NEW: keep real flag per image */
-type ImgItem = { src: string; real: boolean; profile: boolean };
-
-function imagesFromProviderWithMeta(p: ApiProvider): ImgItem[] {
-  return (p.images || [])
+function imagesFromProvider(p: ApiProvider): string[] {
+  const all = (p.images || [])
     .filter((x) => x?.image)
     .slice()
-    .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
-    .map((x) => ({
-      src: x.image,
-      real: x.real === true,
-      profile: x.profile === true,
-    }));
+    .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
+
+  const noProfile = all.filter((x) => !x.profile);
+  const final = noProfile.length > 0 ? noProfile : all;
+
+  return final.map((x) => x.image);
 }
-
-
-
 
 function servicesFromProvider(p: ApiProvider): Service[] {
   const flags: Service[] = [
@@ -145,40 +142,48 @@ function servicesFromProvider(p: ApiProvider): Service[] {
     { name: "shower", available: bool(p.service_shower) },
   ];
 
-  // If backend flags actually contain info, trust them.
   if (flags.some((s) => s.available)) return flags;
 
-  // Fallback: parse "Service: ...." from description
   const text = stripHtml(p.description || "");
   const m = text.match(/Service:\s*([^.\n]+)/i);
   const list = m ? m[1].split(",").map((s) => s.trim()).filter(Boolean) : [];
 
-  const has = (label: string) =>
-    list.some((item) => item.toLowerCase() === label.toLowerCase());
+  const has = (label: string) => list.some((item) => item.toLowerCase() === label.toLowerCase());
 
   return [
     { name: "bbbj", available: has("BBBJ") },
     { name: "cim", available: has("CIM") },
     { name: "dfk", available: has("DFK") },
     { name: "69", available: has("69") },
-    { name: "rimming", available: has("Rimming") },
-    { name: "filming", available: has("Filming") },
+    { name: "rimming", available: has("RIMMING") },
+    { name: "filming", available: has("FILMING") },
     { name: "cbj", available: has("CBJ") },
-    { name: "massage", available: has("Massage") },
+    { name: "massage", available: has("MASSAGE") },
     { name: "gfe", available: has("GFE") },
     { name: "pse", available: has("PSE") },
-    { name: "double", available: has("Double") },
-    { name: "shower", available: has("shower together") || has("shower") },
+    { name: "double", available: has("DOUBLE") },
+    { name: "shower", available: has("SHOWER TOGETHER") || has("SHOWER") },
   ];
 }
 
-// ✅ Normalize backend price values.
-// - handles "180" strings
-// - treats 0 / null / NaN as "no rate" (undefined)
 function priceOrUndef(v: unknown): number | undefined {
   const n = typeof v === "string" ? Number(v) : (v as number);
   if (!Number.isFinite(n)) return undefined;
   return n > 0 ? n : undefined;
+}
+
+function formatTimeLabel(hhmmss: string) {
+  const [hhStr, mmStr] = (hhmmss || "0:0").split(":");
+  let hh = Number(hhStr);
+  const mm = Number(mmStr);
+  const ampm = hh >= 12 ? "PM" : "AM";
+  hh = hh % 12;
+  if (hh === 0) hh = 12;
+  return `${hh}:${String(mm).padStart(2, "0")} ${ampm}`;
+}
+
+function formatWorkingTime(start: string, end: string) {
+  return `${formatTimeLabel(start)} - ${formatTimeLabel(end)}`;
 }
 
 /* ---------------- Component ---------------- */
@@ -187,27 +192,17 @@ const ModelProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
+
   const natLabel = (raw: string) => {
     const key = `nationalities.${raw}`;
     return i18n.exists(key) ? t(key) : raw;
   };
 
-
-  // IMPORTANT: make route param :slug (App.tsx must match)
   const { slug } = useParams<{ slug: string }>();
 
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
-
   const [model, setModel] = useState<ModelProfile | null>(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [touchStart, setTouchStart] = useState(0);
-  const [touchEnd, setTouchEnd] = useState(0);
-  
-
-
-  /** ✅ NEW: store image meta (real flag) aligned with imageArray index */
-  const [imageMeta, setImageMeta] = useState<ImgItem[]>([]);
 
   // optional: roster can pass workingTime via navigate state
   const workingTimeFromState = (location.state as any)?.workingTime as string | undefined;
@@ -215,52 +210,48 @@ const ModelProfilePage: React.FC = () => {
   useEffect(() => {
     let cancelled = false;
 
-    async function loadProvider() {
+    async function load() {
       try {
         setLoading(true);
         setApiError(null);
         setModel(null);
-        setImageMeta([]); // ✅ NEW: clear meta on each load
 
         if (!slug) {
           setApiError("Missing slug in URL");
           return;
         }
 
-        const res = await fetch(PROVIDERS_URL);
-        if (!res.ok) throw new Error(`providers fetch failed: ${res.status}`);
+        const [provRes, rosterRes] = await Promise.all([fetch(PROVIDERS_URL), fetch(ROSTER_TODAY_URL)]);
 
-        const list = (await res.json()) as ApiProvider[];
+        if (!provRes.ok) throw new Error(`providers fetch failed: ${provRes.status}`);
+
+        const list = (await provRes.json()) as ApiProvider[];
         if (!Array.isArray(list)) throw new Error("providers response not an array");
 
         const found = list.find((p) => (p.slug || "").toLowerCase() === slug.toLowerCase());
+        if (!found) return;
 
-        if (!found) {
-          setModel(null);
-          return;
+        let apiWorkingTime: string | undefined;
+
+        if (rosterRes.ok) {
+          const roster = (await rosterRes.json()) as ApiRosterEntry[];
+          if (Array.isArray(roster)) {
+            const entry = roster.find((r) => r.provider_id === found.id);
+            if (entry) apiWorkingTime = formatWorkingTime(entry.start_time, entry.end_time);
+          }
         }
 
-        /** ✅ NEW: get meta + plain string list */
-        // 1) load all images (sorted by priority)
-        // 2) remove profile:true from gallery (low-res thumb)
-        // 3) if that removes everything, fall back to all images (safety)
-        const imgsMetaAll = imagesFromProviderWithMeta(found);
-        const imgsMeta = imgsMetaAll.filter((x) => !x.profile);
-        const finalMeta = imgsMeta.length > 0 ? imgsMeta : imgsMetaAll;
-
-        const imgs = finalMeta.map((x) => x.src);
-
-
+        const imgs = imagesFromProvider(found);
         const services = servicesFromProvider(found);
 
         const mapped: ModelProfile = {
           id: found.id,
+          slug: found.slug,
           name: found.provider_name || found.slug,
           nationality: found.country || "Unknown",
+
           height: found.height || undefined,
           weight: found.weight || undefined,
-
-          // backend only gives cup. keep it simple.
           bust: found.cup ? `${found.cup}` : undefined,
 
           dressSize: found.dress_size || undefined,
@@ -269,23 +260,17 @@ const ModelProfilePage: React.FC = () => {
           skin: found.skin || undefined,
           tattoos: found.tattoos || undefined,
           pubes: found.pubes || undefined,
-          requirements: found.requirements || undefined,
 
           bio: found.description ? stripHtml(found.description) : undefined,
 
-          image: imgs[0] || "",
-          images: imgs.length ? imgs : undefined,
+          images: imgs.length ? imgs : [],
 
-          profileLink: `/models/${found.slug}`,
           isNew: found.is_new === true,
 
-          filming: services.find((s) => s.name === "Filming")?.available ?? false,
-          cim: services.find((s) => s.name === "CIM")?.available ?? false,
-          dfk: services.find((s) => s.name === "DFK")?.available ?? false,
+          workingTime: apiWorkingTime,
 
           services,
 
-          // ✅ NEW: map rates from API (handles string numbers + ignores 0)
           rates: {
             min30: priceOrUndef(found.total_30),
             min45: priceOrUndef(found.total_45),
@@ -293,11 +278,7 @@ const ModelProfilePage: React.FC = () => {
           },
         };
 
-        if (!cancelled) {
-          setModel(mapped);
-          setImageMeta(finalMeta);
-          setCurrentImageIndex(0);
-        }
+        if (!cancelled) setModel(mapped);
       } catch (e: any) {
         if (!cancelled) {
           setApiError(e?.message || "Provider API error");
@@ -308,51 +289,17 @@ const ModelProfilePage: React.FC = () => {
       }
     }
 
-    loadProvider();
+    load();
     return () => {
       cancelled = true;
     };
   }, [slug]);
 
-  const imageArray = useMemo(() => {
-    if (!model) return [];
-    const arr =
-      model.images && model.images.length > 0 ? model.images : model.image ? [model.image] : [];
-    return arr;
-  }, [model]);
-
-  const services = model?.services || [];
-
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev === imageArray.length - 1 ? 0 : prev + 1));
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev === 0 ? imageArray.length - 1 : prev - 1));
-  };
-  const handleTouchStart = (e: React.TouchEvent) => setTouchStart(e.touches[0].clientX);
-  const handleTouchMove = (e: React.TouchEvent) => setTouchEnd(e.touches[0].clientX);
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-
-    // swipe left -> next
-    if (distance > 50) nextImage();
-
-    // swipe right -> prev
-    if (distance < -50) prevImage();
-
-    setTouchStart(0);
-    setTouchEnd(0);
-  };
-
-  /* ---------------- Render states ---------------- */
-
   if (loading) {
     return (
       <Layout>
         <div className="min-h-screen bg-black flex items-center justify-center">
-          <p className="text-gray-400 text-xl">{t("common.loading")}</p>
+          <p className="text-zinc-400 text-xl">{t("common.loading")}</p>
         </div>
       </Layout>
     );
@@ -363,23 +310,13 @@ const ModelProfilePage: React.FC = () => {
       <Layout>
         <div className="min-h-screen bg-black flex items-center justify-center">
           <div className="text-center">
-            <h2
-              className="text-4xl font-bold mb-4"
-              style={{
-                background: "linear-gradient(to right, #ff00ff, #00ffff)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              404
-            </h2>
-
+            <h2 className="text-4xl font-bold mb-4 text-white">404</h2>
             {apiError ? (
-              <p className="text-gray-400 text-xl">
-                {t("profile.loadFailed")} 😢 ({apiError})
+              <p className="text-zinc-400 text-xl">
+                {t("profile.loadFailed")} ({apiError})
               </p>
             ) : (
-              <p className="text-gray-400 text-xl">{t("profile.notFound")} 😢</p>
+              <p className="text-zinc-400 text-xl">{t("profile.notFound")}</p>
             )}
           </div>
         </div>
@@ -387,339 +324,78 @@ const ModelProfilePage: React.FC = () => {
     );
   }
 
-  /* ---------------- Main UI ---------------- */
-
   return (
     <Layout>
       <section className="min-h-screen bg-black relative overflow-hidden py-12">
-        {/* Cyberpunk background */}
+        {/* subtle grid, red-900 only */}
         <div
           className="absolute inset-0 opacity-10"
           style={{
             backgroundImage: `
-              linear-gradient(rgba(255,50,50,0.25) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(255,120,50,0.2) 1px, transparent 1px)
+              linear-gradient(rgba(127,29,29,0.35) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(127,29,29,0.25) 1px, transparent 1px)
             `,
             backgroundSize: "30px 30px",
           }}
         />
 
-        <div className="max-w-6xl mx-auto px-4 relative z-10">
-          {/* n5 – Back to roster (smart) */}
+        <div className="max-w-6xl mx-auto px-4 relative z-10 pb-24 lg:pb-0">
+          {/* Back to roster */}
           <button
             onClick={() => {
               if (window.history.state?.idx > 0) {
                 navigate(-1);
                 return;
               }
-              navigate(
-                { pathname: "/", search: window.location.search, hash: "#roster" },
-                { state: { scrollTo: "roster" } }
-              );
+              navigate({ pathname: "/", search: window.location.search, hash: "#roster" }, { state: { scrollTo: "roster" } });
             }}
-            className="
-    inline-flex items-center gap-2
-    mb-6 px-4 py-2
-    border border-red-500/40
-    bg-black/60
-    text-red-400
-    hover:text-red-300
-    hover:bg-red-500/10
-    transition-all
-    uppercase tracking-wider text-sm font-bold
-  "
+            className="inline-flex items-center gap-2 mb-6 px-4 py-2 border border-red-900 bg-black/60 text-zinc-200 hover:text-white hover:bg-white/5 transition-colors uppercase tracking-wider text-sm font-bold"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Roster
           </button>
 
-
-
-
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left Column - Image Carousel */}
+            {/* Left: gallery */}
             <div className="space-y-6">
-              <div
-                className="relative aspect-[3/4] overflow-hidden touch-pan-y"
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}>
-
-                {imageArray.length > 0 ? (
-                  <img
-                    src={imageArray[currentImageIndex]}
-                    alt={`${model.name} - Photo ${currentImageIndex + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-600">
-                    {t("common.noImage")}                  </div>
-                )}
-
-                {model.isNew && (
-                  <span
-                    className="absolute top-4 right-4 bg-red-500 text-white text-sm px-3 py-1 font-bold uppercase tracking-wider animate-pulse"
-                    style={{ boxShadow: "0 0 15px rgba(255,0,255,0.8)" }}
-                  >
-                    {t("badges.new")}
-                  </span>
-                )}
-
-                {/* ✅ NEW: REAL PHOTO badge when current image has real:true */}
-                {imageMeta[currentImageIndex]?.real && (
-                  <span
-                    className="absolute top-4 left-4 bg-emerald-400 text-black text-sm px-3 py-1 font-bold uppercase tracking-wider"
-                    style={{ boxShadow: "0 0 12px rgba(16,185,129,0.9)" }}
-                  >
-                    {t("badges.realPhoto")}
-                  </span>
-                )}
-
-                {imageArray.length > 1 && (
-                  <>
-                    <button
-                      onClick={prevImage}
-                      className="absolute left-0 top-1/2 -translate-y-1/2 px-4 py-8 bg-black/70 border-red-500/50 text-red-500 hover:bg-red-500/20 transition-all"
-                    >
-                      <ChevronLeft className="w-6 h-6" />
-                    </button>
-                    <button
-                      onClick={nextImage}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 px-4 py-8 bg-black/70 border-red-500/50 text-red-500 hover:bg-red-500/20 transition-all"
-                    >
-                      <ChevronRight className="w-6 h-6" />
-                    </button>
-                  </>
-                )}
-
-                {imageArray.length > 1 && (
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                    {imageArray.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentImageIndex(index)}
-                        className={`h-2 transition-all ${index === currentImageIndex
-                          ? "bg-gradient-to-r from-red-500 to-red-900 w-8"
-                          : "bg-gray-700 w-2 hover:bg-gray-500"
-                          }`}
-                        style={{
-                          boxShadow:
-                            index === currentImageIndex
-                              ? "0 0 10px rgba(255,0,255,0.8)"
-                              : "none",
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {imageArray.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {imageArray.map((img, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentImageIndex(index)}
-                      className={`flex-shrink-0 w-20 h-28 overflow-hidden transition-all border-2 ${index === currentImageIndex
-                        ? "border-red-500 opacity-100"
-                        : "border-gray-800 opacity-60 hover:opacity-100 hover:border-red-500/50"
-                        }`}
-                      style={{
-                        boxShadow:
-                          index === currentImageIndex
-                            ? "0 0 15px rgba(255,0,255,0.6)"
-                            : "none",
-                      }}
-                    >
-                      <img
-                        src={img}
-                        alt={`Thumbnail ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Rates */}
-              <div className="bg-[#150505]/90 border border-red-600/30 p-6 shadow-[0_0_20px_rgba(255,40,40,0.2)]">
-                <h3 className="text-center text-red-400 font-bold text-xl mb-4 uppercase tracking-widest">
-                  Rates
-                </h3>
-                <div className="flex justify-evenly text-center">
-                  <div>
-                    <p className="text-gray-400 text-xl mb-2">{t("rates.min30")}</p>
-                    <p className="text-3xl font-bold text-white">
-                      {typeof model.rates?.min30 === "number" ? `$${model.rates.min30}` : "—"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-xl mb-2">{t("rates.min45")}</p>
-                    <p className="text-3xl font-bold text-white">
-                      {typeof model.rates?.min45 === "number" ? `$${model.rates.min45}` : "—"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-xl mb-2">{t("rates.min60")}</p>
-                    <p className="text-3xl font-bold text-white">
-                      {typeof model.rates?.min60 === "number" ? `$${model.rates.min60}` : "—"}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <ProfileGallery name={model.name} images={model.images} isNew={model.isNew} />
             </div>
 
-            {/* Right Column - Info */}
-            <div className="space-y-6">
-              <div className="px-4 mb-6 flex flex-col items-center text-center">
-                <h1
-                  className="text-5xl font-bold leading-[1.1]"
-                  style={{
-                    background: "linear-gradient(to right, #ff2b2b, #ff8800)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    textShadow: "0 0 8px rgba(255,60,60,0.9), 0 0 20px rgba(255,100,50,0.8)",
-                  }}
-                >
-                  {model.name}
-                </h1>
+            <div className="max-w-[520px] mx-auto flex flex-col gap-10">
+  <ProfileHeader
+    name={model.name}
+    workingTime={workingTimeFromState || model.workingTime}
+    rates={model.rates}
+  />
 
-                {(workingTimeFromState || model.workingTime) && (
-                  <p className="text-gray-300 text-3xl mt-4 tracking-wide">
-                    {workingTimeFromState || model.workingTime}
-                  </p>
-                )}
-              </div>
+  {/* narrower content */}
+  <div className="mt-10 w-full max-w-[340px] mx-auto flex flex-col gap-10">
+    <AvailableServices services={model.services} />
 
-              {model.bio && <p className="text-gray-300 leading-relaxed">{model.bio}</p>}
+    <ProfileDetailsGrid
+      natLabel={natLabel}
+      nationality={model.nationality}
+      height={model.height}
+      weight={model.weight}
+      bust={model.bust}
+      dressSize={model.dressSize}
+      figure={model.figure}
+      hair={model.hair}
+      skin={model.skin}
+      tattoos={model.tattoos}
+      pubes={model.pubes}
+    />
 
-              {/* Details */}
-              <div className="bg-gray-900 border border-red-500/30 p-6">
-                <h3 className="text-red-700 font-bold text-lg mb-4 uppercase tracking-widest">
-                  Details
-                </h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  {model.nationality && (
-                    <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">{t("profile.from")}</span>
-                      <p className="text-white font-bold text-2xl">{natLabel(model.nationality)}</p>
-                    </div>
-                  )}
-                  {model.height && (
-                    <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">{t("profile.height")}</span>
-                      <p className="text-white font-bold text-2xl">{model.height} cm</p>
-                    </div>
-                  )}
-                  {model.weight && (
-                    <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">{t("profile.weight")}</span>
-                      <p className="text-white font-bold text-2xl">{model.weight} kg</p>
-                    </div>
-                  )}
-                  {model.bust && (
-                    <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">{t("profile.cup")}</span>
-                      <p className="text-white font-bold text-2xl">{model.bust}</p>
-                    </div>
-                  )}
-                  {model.dressSize && (
-                    <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">{t("profile.dressSize")}</span>
-                      <p className="text-white font-bold text-2xl">{model.dressSize}</p>
-                    </div>
-                  )}
-                  {model.figure && (
-                    <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">{t("profile.figure")}</span>
-                      <p className="text-white font-bold text-2xl">{model.figure}</p>
-                    </div>
-                  )}
-                  {model.hair && (
-                    <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">{t("profile.hair")}</span>
-                      <p className="text-white font-bold text-2xl">{model.hair}</p>
-                    </div>
-                  )}
-                  {model.skin && (
-                    <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">{t("profile.skin")}</span>
-                      <p className="text-white font-bold text-2xl">{model.skin}</p>
-                    </div>
-                  )}
-                  {model.tattoos && (
-                    <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">{t("profile.tattoos")}</span>
-                      <p className="text-white font-bold text-2xl">{model.tattoos}</p>
-                    </div>
-                  )}
-                  {model.pubes && (
-                    <div className="border-b border-gray-800 pb-2">
-                      <span className="text-gray-500 uppercase text-lg">{t("profile.pubes")}</span>
-                      <p className="text-white font-bold text-2xl">{model.pubes}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+    {model.bio && (
+      <ProfileBio bio={model.bio} name={model.name} />
+    )}
+  </div>
+</div>
 
-              {model.requirements && (
-                <div className="bg-red-900/20 border-l-4 border-red-500 pl-4 py-3">
-                  <p className="text-red-700 font-bold uppercase text-lg mb-1">Requirements</p>
-                  <p className="text-white text-2xl">{model.requirements}</p>
-                </div>
-              )}
-
-              {/* Available Services */}
-              <div className="bg-gray-900 border border-red-500/30 p-6">
-                <h3 className="text-red-700 font-bold text-lg mb-4 uppercase tracking-widest">
-                  {t("profile.availableServices")}
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {services.map((service) => (
-                    <div
-                      key={service.name}
-                      className={`flex items-center gap-2 p-3 border transition-all ${service.available
-                        ? "bg-red-900/20 border-red-500/50 text-white-500"
-                        : "bg-gray-800/50 border-gray-700 text-gray-600"
-                        }`}
-                    >
-                      {service.available ? (
-                        <Check className="w-4 h-4 flex-shrink-0" />
-                      ) : (
-                        <X className="w-4 h-4 flex-shrink-0" />
-                      )}
-                      <span
-                        className={`text-2xl font-bold uppercase ${service.available ? "" : "line-through"
-                          }`}
-                      >
-                        {t(`services.${service.name}`)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
           </div>
 
-          {/* Sticky Mobile CTA */}
-          <div
-            className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-black border-t border-red-600/50 z-50"
-            style={{ boxShadow: "0 -4px 18px rgba(255,40,40,0.35)" }}
-          >
-            <a
-              href="tel:+61417888123"
-              className="w-full flex items-center justify-center gap-3
-                bg-gradient-to-b from-red-500 to-red-700
-                text-white font-bold py-4 px-6 uppercase tracking-wider
-                rounded-md shadow-[0_4px_10px_rgba(255,0,0,0.4)]
-                hover:shadow-[0_0_20px_rgba(255,80,0,0.8)]
-                hover:from-red-400 hover:to-red-600
-                transition-all duration-300"
-            >
-              <Phone className="w-5 h-5" />
-              Book Now
-            </a>
-          </div>
+          {/* Mobile CTA */}
+          <MobileCTA phoneNumber="+61417888123" />
         </div>
       </section>
     </Layout>

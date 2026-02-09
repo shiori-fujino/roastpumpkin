@@ -18,6 +18,8 @@ export default {
       fontFamily: {
         orbitron: ['Orbitron', 'monospace'],
         rajdhani: ['Rajdhani', 'sans-serif'],
+        cormorant: ["Cormorant", "serif"],
+
       },
       animation: {
         'pulse-glow': 'pulse-glow 2s ease-in-out infinite',

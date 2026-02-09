@@ -45,11 +45,13 @@
     "new": "NEW"
   },
   "rates": {
+    "title": "Rates",
     "min30": "30 Min",
     "min45": "45 Min",
     "min60": "60 Min"
   },
   "profile": {
+    "details": "Details",
     "from": "From",
     "cup": "Cup",
     "height": "Height",
