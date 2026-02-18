@@ -6,11 +6,16 @@ import type { ShiftStatus } from "../lib/roster/time";
 
 export type RosterTab = "today" | "tomorrow";
 
+function normalizeTime(v: string | null): ShiftStatus {
+  // only allow our new 2-state values
+  return v === "today" ? "today" : "now";
+}
+
 export function useRosterParams() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // ---- parse URL (single source of truth)
-  const time = (searchParams.get("time") as ShiftStatus) || "now";
+  const time = normalizeTime(searchParams.get("time"));
   const tab = (searchParams.get("tab") as RosterTab) || "today";
 
   const nat = (searchParams.get("nat") || "")
@@ -62,19 +67,24 @@ export function useRosterParams() {
     [searchParams, setSearchParams]
   );
 
-  // ✅ ensure defaults exist (time/tab/page)
+  // ✅ ensure defaults exist (time/tab/page) + normalize legacy time values
   useEffect(() => {
     const next = new URLSearchParams(searchParams);
     let changed = false;
 
-    if (!next.get("time")) {
-      next.set("time", "now");
+    const rawTime = next.get("time");
+    const normalized = normalizeTime(rawTime);
+
+    if (!rawTime || rawTime !== normalized) {
+      next.set("time", normalized);
       changed = true;
     }
+
     if (!next.get("tab")) {
       next.set("tab", "today");
       changed = true;
     }
+
     if (!next.get("page")) {
       next.set("page", "0");
       changed = true;

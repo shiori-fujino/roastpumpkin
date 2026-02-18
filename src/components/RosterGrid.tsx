@@ -103,7 +103,12 @@ const RosterGrid: React.FC = () => {
   const timeFilteredRoster = useMemo(() => {
     return randomizedRoster.filter((m) => {
       if (!m.startTime || !m.endTime) return true;
-      return getShiftStatusOnDay(m.startTime, m.endTime, rosterDay) === time;
+
+      // ✅ today = show full roster for the day (no time filtering)
+      if (time === "today") return true;
+
+      // ✅ now = only currently on shift
+      return getShiftStatusOnDay(m.startTime, m.endTime, rosterDay) === "now";
     });
   }, [randomizedRoster, time, rosterDay]);
 
@@ -230,23 +235,17 @@ const RosterGrid: React.FC = () => {
               )}
             </button>
 
-            {/* Time filter (always “active control”, keep selected styling) */}
+            {/* Time toggle: now <-> today */}
             <button
               onClick={() => {
-                const order: Array<"now" | "later" | "finished"> = ["now", "later", "finished"];
-                const idx = order.indexOf(time);
-                const next = order[(idx + 1) % order.length];
+                const next = time === "now" ? "today" : "now";
                 commitParams({ time: next });
               }}
               className={`flex items-center gap-2 px-4 py-2 text-xl border transition-colors ${selectedBtn} ${subtleInnerHighlight}`}
               title="Time filter"
             >
               <Clock className="w-4 h-4" />
-              {time === "now"
-                ? t("filter.onNow")
-                : time === "later"
-                ? t("filter.startLater")
-                : t("filter.finished")}
+              {time === "now" ? t("filter.onNow") : t("filter.seeAll")}
             </button>
           </div>
         )}

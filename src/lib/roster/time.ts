@@ -1,6 +1,6 @@
 // src/lib/roster/time.ts
 
-export type ShiftStatus = "now" | "later" | "finished";
+export type ShiftStatus = "now" | "today";
 
 export function parseHHMMSSParts(hhmmss: string): { hh: number; mm: number; ss: number } {
   const [hhStr, mmStr, ssStr] = (hhmmss || "0:0:0").split(":");
@@ -81,6 +81,7 @@ export function getShiftStatusOnDay(
   }
 
   if (now.getTime() >= startAt.getTime() && now.getTime() < endAt.getTime()) return "now";
-  if (now.getTime() < startAt.getTime()) return "later";
-  return "finished";
+  if (now.getTime() >= startAt.getTime() && now.getTime() < endAt.getTime()) return "now";
+return "today";
+
 }

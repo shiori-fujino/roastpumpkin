@@ -31,8 +31,7 @@
         "nationality": "国籍",
         "clear": "清除筛选",
         "onNow": "现在可约",
-        "startLater": "稍后可约",
-        "finished": "已结束"
+        "seeAll": "查看全部"
     },
     "common": {
         "loading": "加载中…",
