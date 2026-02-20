@@ -7,7 +7,8 @@ import type { ShiftStatus } from "../lib/roster/time";
 export type RosterTab = "today" | "tomorrow";
 
 function normalizeTime(v: string | null): ShiftStatus {
-  // only allow our new 2-state values
+  // default: today (See All)
+  if (v == null) return "today";
   return v === "today" ? "today" : "now";
 }
 
